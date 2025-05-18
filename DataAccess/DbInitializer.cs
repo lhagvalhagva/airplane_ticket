@@ -9,6 +9,17 @@ namespace DataAccess
 {
     public static class DbInitializer
     {
+        /// <summary>
+        /// Өгөгдлийн санг шууд үүсгэж, анхны өгөгдлүүдийг оруулна
+        /// </summary>
+        public static async Task CreateAndInitializeDatabase()
+        {
+            using (var context = new AirportDbContext())
+            {
+                await InitializeAsync(context);
+            }
+        }
+
         public static async Task InitializeAsync(AirportDbContext context)
         {
             await context.Database.EnsureCreatedAsync();

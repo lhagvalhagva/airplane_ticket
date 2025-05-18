@@ -15,3 +15,4 @@ C:\Users\User\Desktop\WINDOWS_PROJECT\BusinessLogic\obj\Debug\net8.0\BusinessLog
 C:\Users\User\Desktop\WINDOWS_PROJECT\BusinessLogic\obj\Debug\net8.0\ref\BusinessLogic.dll
 C:\Users\User\Desktop\WINDOWS_PROJECT\BusinessLogic\bin\Debug\net8.0\BusinessLogic.xml
 C:\Users\User\Desktop\WINDOWS_PROJECT\BusinessLogic\obj\Debug\net8.0\BusinessLogic.xml
+C:\Users\User\Desktop\WINDOWS_PROJECT\BusinessLogic\obj\Debug\net8.0\BusinessLogic.sourcelink.json

@@ -1,11 +1,19 @@
 using Microsoft.EntityFrameworkCore;
 using DataAccess.Models;
+using System.IO;
+using System.Reflection;
 
 namespace DataAccess
 {
     public class AirportDbContext : DbContext
     {
+        // For dependency injection
         public AirportDbContext(DbContextOptions<AirportDbContext> options) : base(options)
+        {
+        }
+
+        // For design-time and direct initialization
+        public AirportDbContext()
         {
         }
 
@@ -14,6 +22,17 @@ namespace DataAccess
         public DbSet<Seat> Seats { get; set; }
         public DbSet<BoardingPass> BoardingPasses { get; set; }
         public DbSet<FlightPassenger> FlightPassengers { get; set; }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
+                // DataAccess хавтас руу заах замыг гаргах
+                string dataAccessPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                string dbPath = Path.Combine(dataAccessPath, "airport.db");
+                optionsBuilder.UseSqlite($"Data Source={dbPath}");
+            }
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

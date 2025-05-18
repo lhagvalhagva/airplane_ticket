@@ -4,6 +4,9 @@ using DataAccess.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.IO;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace BusinessLogic
 {
@@ -20,6 +23,16 @@ namespace BusinessLogic
         /// <returns>Сервисийн цуглуулга</returns>
         public static IServiceCollection AddBusinessLogic(this IServiceCollection services, string connectionString)
         {
+            // Хэрэв холболтын утга хоосон бол DataAccess хавтаст өгөгдлийн сан үүсгэх
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                // DataAccess.dll замыг олох
+                string dataAccessDllPath = Path.GetDirectoryName(
+                    Assembly.GetAssembly(typeof(AirportDbContext)).Location);
+                string dbPath = Path.Combine(dataAccessDllPath, "airport.db");
+                connectionString = $"Data Source={dbPath}";
+            }
+
             // Өгөгдлийн сан бүртгэх
             services.AddDbContext<AirportDbContext>(options =>
                 options.UseSqlite(connectionString));
@@ -34,6 +47,14 @@ namespace BusinessLogic
             services.AddScoped<INotificationService, NotificationService>();
 
             return services;
+        }
+
+        /// <summary>
+        /// Өгөгдлийн санг үүсгэж, анхны өгөгдлүүдийг оруулах
+        /// </summary>
+        public static async Task InitializeDatabaseAsync()
+        {
+            await DbInitializer.CreateAndInitializeDatabase();
         }
     }
 } 

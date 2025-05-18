@@ -82,3 +82,9 @@ C:\Users\User\Desktop\WINDOWS_PROJECT\RestApi\obj\Debug\net8.0\RestApi.pdb
 C:\Users\User\Desktop\WINDOWS_PROJECT\RestApi\obj\Debug\net8.0\RestApi.genruntimeconfig.cache
 C:\Users\User\Desktop\WINDOWS_PROJECT\RestApi\obj\Debug\net8.0\ref\RestApi.dll
 C:\Users\User\Desktop\WINDOWS_PROJECT\RestApi\bin\Debug\net8.0\BusinessLogic.xml
+C:\Users\User\Desktop\WINDOWS_PROJECT\RestApi\bin\Debug\net8.0\Microsoft.Win32.SystemEvents.dll
+C:\Users\User\Desktop\WINDOWS_PROJECT\RestApi\bin\Debug\net8.0\System.Drawing.Common.dll
+C:\Users\User\Desktop\WINDOWS_PROJECT\RestApi\bin\Debug\net8.0\System.Windows.Extensions.dll
+C:\Users\User\Desktop\WINDOWS_PROJECT\RestApi\bin\Debug\net8.0\runtimes\win\lib\net8.0\Microsoft.Win32.SystemEvents.dll
+C:\Users\User\Desktop\WINDOWS_PROJECT\RestApi\bin\Debug\net8.0\runtimes\win\lib\net8.0\System.Windows.Extensions.dll
+C:\Users\User\Desktop\WINDOWS_PROJECT\RestApi\obj\Debug\net8.0\RestApi.sourcelink.json

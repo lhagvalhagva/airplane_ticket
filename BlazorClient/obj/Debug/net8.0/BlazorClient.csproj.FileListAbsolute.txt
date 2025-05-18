@@ -25,9 +25,10 @@ C:\Users\User\Desktop\WINDOWS_PROJECT\BlazorClient\obj\Debug\net8.0\staticwebass
 C:\Users\User\Desktop\WINDOWS_PROJECT\BlazorClient\obj\Debug\net8.0\staticwebassets\msbuild.buildMultiTargeting.BlazorClient.props
 C:\Users\User\Desktop\WINDOWS_PROJECT\BlazorClient\obj\Debug\net8.0\staticwebassets\msbuild.buildTransitive.BlazorClient.props
 C:\Users\User\Desktop\WINDOWS_PROJECT\BlazorClient\obj\Debug\net8.0\staticwebassets.pack.json
-C:\Users\User\Desktop\WINDOWS_PROJECT\BlazorClient\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 C:\Users\User\Desktop\WINDOWS_PROJECT\BlazorClient\obj\Debug\net8.0\BlazorClient.dll
 C:\Users\User\Desktop\WINDOWS_PROJECT\BlazorClient\obj\Debug\net8.0\refint\BlazorClient.dll
 C:\Users\User\Desktop\WINDOWS_PROJECT\BlazorClient\obj\Debug\net8.0\BlazorClient.pdb
 C:\Users\User\Desktop\WINDOWS_PROJECT\BlazorClient\obj\Debug\net8.0\BlazorClient.genruntimeconfig.cache
 C:\Users\User\Desktop\WINDOWS_PROJECT\BlazorClient\obj\Debug\net8.0\ref\BlazorClient.dll
+C:\Users\User\Desktop\WINDOWS_PROJECT\BlazorClient\obj\Debug\net8.0\BlazorClient.sourcelink.json
+C:\Users\User\Desktop\WINDOWS_PROJECT\BlazorClient\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

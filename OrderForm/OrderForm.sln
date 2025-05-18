@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35825.156 d17.13
+VisualStudioVersion = 17.13.35825.156
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderForm", "OrderForm.csproj", "{F590CF05-08C2-4550-8488-C780B9BAE6B4}"
 EndProject
@@ -13,9 +13,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignalRHubLibrary", "..\Sig
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RestApi", "..\RestApi\RestApi.csproj", "{6FCEC457-72F6-4319-BC63-4F7367524317}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp1", "..\ConsoleApp1\ConsoleApp1.csproj", "{0D21B3EF-11F6-4BAA-86F9-32032305E7C3}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorClient", "..\BlazorClient\BlazorClient.csproj", "{4CA279F8-E9BA-4A5A-A6C7-8B75EBED1CCE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Order_form", "..\Order_form\Order_form.csproj", "{CE4A1D13-C126-49A0-8237-EA272916B48E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -43,14 +43,14 @@ Global
 		{6FCEC457-72F6-4319-BC63-4F7367524317}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6FCEC457-72F6-4319-BC63-4F7367524317}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6FCEC457-72F6-4319-BC63-4F7367524317}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0D21B3EF-11F6-4BAA-86F9-32032305E7C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0D21B3EF-11F6-4BAA-86F9-32032305E7C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0D21B3EF-11F6-4BAA-86F9-32032305E7C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0D21B3EF-11F6-4BAA-86F9-32032305E7C3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4CA279F8-E9BA-4A5A-A6C7-8B75EBED1CCE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4CA279F8-E9BA-4A5A-A6C7-8B75EBED1CCE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4CA279F8-E9BA-4A5A-A6C7-8B75EBED1CCE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4CA279F8-E9BA-4A5A-A6C7-8B75EBED1CCE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CE4A1D13-C126-49A0-8237-EA272916B48E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE4A1D13-C126-49A0-8237-EA272916B48E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE4A1D13-C126-49A0-8237-EA272916B48E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE4A1D13-C126-49A0-8237-EA272916B48E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -57,6 +57,33 @@ namespace RestApi.Controllers
         /// Тодорхой нислэгийн бүх суудлуудын жагсаалтыг авах.
         /// </summary>
         /// <param name="flightId">Нислэгийн ID</param>
+        /// <returns>Нислэгийн бүх суудлуудын жагсаалт</returns>
+        /// <response code="200">Суудлуудын жагсаалт амжилттай буцаагдсан</response>
+        /// <response code="404">Нислэг олдоогүй</response>
+        [HttpGet("seats/{flightId}")]
+        public async Task<ActionResult<IEnumerable<Seat>>> GetAllSeatsForFlight(int flightId)
+        {
+            try
+            {
+                // Нислэг байгаа эсэхийг шалгах эсвэл бусад логик шалгалт
+                // Энд хялбар байлгахын тулд бүх суудлыг буцаая
+                var result = await _boardingService.GetAvailableSeatsAsync(flightId);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Тодорхой нислэгийн бүх онгоцны бүртгэлийн жагсаалтыг авах.
+        /// </summary>
+        /// <param name="flightId">Нислэгийн ID</param>
         /// <returns>Нислэгийн бүх онгоцны бүртгэлийн жагсаалт</returns>
         /// <response code="200">Онгоцны бүртгэлийн жагсаалт амжилттай буцаагдсан</response>
         /// <response code="400">Нислэгийн дугаар буруу</response>
@@ -129,15 +156,19 @@ namespace RestApi.Controllers
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(ex.Message);
+                // Зорчигч, нислэг эсвэл суудал олдохгүй бол тодорхой алдааны мессеж буцаах
+                return NotFound(new { Error = ex.Message, Details = $"SeatNumber: {request.SeatNumber}, FlightId: {request.FlightId}" });
             }
             catch (InvalidOperationException ex)
             {
-                return Conflict(ex.Message);
+                // Суудал аль хэдийн бүртгүүлсэн бол тодорхой алдааны мессеж буцаах
+                return Conflict(new { Error = ex.Message, Details = $"SeatNumber: {request.SeatNumber}, FlightId: {request.FlightId}" });
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                // Энд алдааны мессежийг хэвлэх ба алдааны мессежийг буцаах
+                Console.WriteLine($"Error in CheckInPassenger: {ex.Message}");
+                return BadRequest(new { Error = ex.Message, Details = $"SeatNumber: {request.SeatNumber}, FlightId: {request.FlightId}" });
             }
         }
 

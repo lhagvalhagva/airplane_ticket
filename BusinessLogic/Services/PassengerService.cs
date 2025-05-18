@@ -10,10 +10,12 @@ namespace BusinessLogic.Services
     public class PassengerService : IPassengerService
     {
         private readonly IRepository<Passenger> _passengerRepository;
+        private readonly IRepository<FlightPassenger> _flightPassengerRepository;
 
-        public PassengerService(IRepository<Passenger> passengerRepository)
+        public PassengerService(IRepository<Passenger> passengerRepository, IRepository<FlightPassenger> flightPassengerRepository)
         {
             _passengerRepository = passengerRepository;
+            _flightPassengerRepository = flightPassengerRepository;
         }
 
         public async Task<IEnumerable<Passenger>> GetAllPassengersAsync()
@@ -54,6 +56,32 @@ namespace BusinessLogic.Services
         {
             var passenger = await _passengerRepository.GetByIdAsync(passengerId);
             return passenger != null;
+        }
+        
+        public async Task<IEnumerable<Passenger>> GetPassengersByFlightIdAsync(int flightId)
+        {
+            // Тухайн нислэгт бүртгэлтэй зорчигчдын холбоосыг авах
+            var flightPassengers = await _flightPassengerRepository.FindAsync(fp => fp.FlightId == flightId);
+            if (!flightPassengers.Any())
+            {
+                throw new KeyNotFoundException($"{flightId} дугаартай нислэгт бүртгэлтэй зорчигч олдсонгүй.");
+            }
+            
+            // Зорчигчдын ID-г цуглуулах
+            var passengerIds = flightPassengers.Select(fp => fp.PassengerId).ToList();
+            
+            // Зорчигчдын мэдээллийг авах
+            var result = new List<Passenger>();
+            foreach (var id in passengerIds)
+            {
+                var passenger = await _passengerRepository.GetByIdAsync(id);
+                if (passenger != null)
+                {
+                    result.Add(passenger);
+                }
+            }
+            
+            return result;
         }
     }
 } 

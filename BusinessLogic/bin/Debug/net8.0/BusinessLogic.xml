@@ -17,6 +17,40 @@
             <param name="connectionString">Өгөгдлийн сангийн холболтын утга</param>
             <returns>Сервисийн цуглуулга</returns>
         </member>
+        <member name="M:BusinessLogic.DependencyInjection.InitializeDatabaseAsync">
+            <summary>
+            Өгөгдлийн санг үүсгэж, анхны өгөгдлүүдийг оруулах
+            </summary>
+        </member>
+        <member name="T:BusinessLogic.Printing.BoardingPassPrinter">
+            <summary>
+            Онгоцны суух үнэмлэх (тасалбар) хэвлэх үйлчилгээний класс.
+            </summary>
+        </member>
+        <member name="M:BusinessLogic.Printing.BoardingPassPrinter.PrintBoardingPass(DataAccess.Models.BoardingPass)">
+            <summary>
+            Онгоцны суух үнэмлэх хэвлэх
+            </summary>
+            <param name="boardingPass">Хэвлэх онгоцны бүртгэлийн мэдээлэл</param>
+            <returns>Хэвлэлтийн амжилттай эсэх</returns>
+        </member>
+        <member name="M:BusinessLogic.Printing.BoardingPassPrinter.GetPrintContent(DataAccess.Models.BoardingPass)">
+            <summary>
+            Зөвхөн хэвлэх агуулгыг буцаах (хэвлэх диалогийг ашиглахгүй гар аргаар хэвлэх)
+            </summary>
+            <param name="boardingPass">Хэвлэх онгоцны бүртгэлийн мэдээлэл</param>
+            <returns>Хэвлэх агуулгын тайлбар</returns>
+        </member>
+        <member name="M:BusinessLogic.Printing.BoardingPassPrinter.PrintDocument_PrintPage(System.Object,System.Drawing.Printing.PrintPageEventArgs)">
+            <summary>
+            Хэвлэх хуудасны контент үүсгэх
+            </summary>
+        </member>
+        <member name="M:BusinessLogic.Printing.BoardingPassPrinter.GenerateBoardingPassContent">
+            <summary>
+            Бортын нэмэлт агуулгыг текст хэлбэрээр үүсгэх
+            </summary>
+        </member>
         <member name="T:BusinessLogic.Services.IBoardingService">
             <summary>
             Онгоцонд суух, бүртгэлийн үйл явцыг удирдах үйлчилгээний интерфейс.
@@ -181,6 +215,13 @@
             </summary>
             <param name="passengerId">Зорчигчийн ID</param>
             <returns>Зорчигч байгаа эсэх</returns>
+        </member>
+        <member name="M:BusinessLogic.Services.IPassengerService.GetPassengersByFlightIdAsync(System.Int32)">
+            <summary>
+            Нислэгийн зорчигчдын жагсаалтыг авах.
+            </summary>
+            <param name="flightId">Нислэгийн ID</param>
+            <returns>Нислэгийн зорчигчдын жагсаалт</returns>
         </member>
     </members>
 </doc>

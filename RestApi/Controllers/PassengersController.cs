@@ -39,6 +39,31 @@ namespace RestApi.Controllers
         }
 
         /// <summary>
+        /// Нислэгийн зорчигчдыг авах
+        /// </summary>
+        /// <param name="flightId">Нислэгийн ID</param>
+        /// <returns>Зорчигчдын жагсаалт</returns>
+        /// <response code="200">Зорчигчдын жагсаалт амжилттай буцаагдсан</response>
+        /// <response code="404">Нислэг олдсонгүй</response>
+        [HttpGet("flight/{flightId}")]
+        public async Task<ActionResult<IEnumerable<Passenger>>> GetFlightPassengers(int flightId)
+        {
+            try
+            {
+                var passengers = await _passengerService.GetPassengersByFlightIdAsync(flightId);
+                return Ok(passengers);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        /// <summary>
         /// Зорчигчийн ID-аар зорчигчийн мэдээлэл авах.
         /// </summary>
         /// <param name="id">Зорчигчийн ID</param>

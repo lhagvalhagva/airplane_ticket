@@ -49,5 +49,12 @@ namespace BusinessLogic.Services
         /// <param name="passengerId">Зорчигчийн ID</param>
         /// <returns>Зорчигч байгаа эсэх</returns>
         Task<bool> PassengerExistsAsync(int passengerId);
+
+        /// <summary>
+        /// Нислэгийн зорчигчдын жагсаалтыг авах.
+        /// </summary>
+        /// <param name="flightId">Нислэгийн ID</param>
+        /// <returns>Нислэгийн зорчигчдын жагсаалт</returns>
+        Task<IEnumerable<Passenger>> GetPassengersByFlightIdAsync(int flightId);
     }
-} 
+}

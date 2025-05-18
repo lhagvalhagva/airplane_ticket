@@ -1,10 +1,16 @@
 using BusinessLogic;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Add BusinessLogic services
-builder.Services.AddBusinessLogic(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=airport.db");
+string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddBusinessLogic(connectionString);
+
+// Initialize database if it doesn't exist
+await BusinessLogic.DependencyInjection.InitializeDatabaseAsync();
 
 // Add CORS
 builder.Services.AddCors(options =>
@@ -17,7 +23,13 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+    });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

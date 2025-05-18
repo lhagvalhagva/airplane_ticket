@@ -9,3 +9,4 @@ C:\Users\User\Desktop\WINDOWS_PROJECT\SignalRHubLibrary\obj\Debug\net8.0\SignalR
 C:\Users\User\Desktop\WINDOWS_PROJECT\SignalRHubLibrary\obj\Debug\net8.0\refint\SignalRHubLibrary.dll
 C:\Users\User\Desktop\WINDOWS_PROJECT\SignalRHubLibrary\obj\Debug\net8.0\SignalRHubLibrary.pdb
 C:\Users\User\Desktop\WINDOWS_PROJECT\SignalRHubLibrary\obj\Debug\net8.0\ref\SignalRHubLibrary.dll
+C:\Users\User\Desktop\WINDOWS_PROJECT\SignalRHubLibrary\obj\Debug\net8.0\SignalRHubLibrary.sourcelink.json
