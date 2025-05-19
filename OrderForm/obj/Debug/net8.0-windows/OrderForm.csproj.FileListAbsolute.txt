@@ -65,3 +65,5 @@ C:\Users\User\Desktop\WINDOWS_PROJECT\OrderForm\obj\Debug\net8.0-windows\OrderFo
 C:\Users\User\Desktop\WINDOWS_PROJECT\OrderForm\obj\Debug\net8.0-windows\ref\OrderForm.dll
 C:\Users\User\Desktop\WINDOWS_PROJECT\OrderForm\obj\Debug\net8.0-windows\OrderForm.sourcelink.json
 C:\Users\User\Desktop\WINDOWS_PROJECT\OrderForm\obj\Debug\net8.0-windows\OrderForm.Form1.resources
+C:\Users\User\Desktop\WINDOWS_PROJECT\OrderForm\obj\Debug\net8.0-windows\OrderForm.Pages.FlightRegistrationForm.resources
+C:\Users\User\Desktop\WINDOWS_PROJECT\OrderForm\obj\Debug\net8.0-windows\OrderForm.Controls.SeatMapUserControl.resources

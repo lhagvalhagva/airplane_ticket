@@ -75,6 +75,49 @@ namespace OrderForm.Services
 
         #region Passengers
 
+        public async Task<PassengerDto?> GetPassengerByIdAsync(int passengerId)
+        {
+            var response = await _httpClient.GetAsync($"{_apiBaseUrl}/Passengers/{passengerId}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<PassengerDto>(content);
+            }
+            
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                return null;
+            
+            throw new Exception($"Зорчигчийн мэдээлэл авах үед алдаа гарлаа: {response.StatusCode}");
+        }
+        
+        public async Task<PassengerDto?> GetPassengerByPassportAsync(string passportNumber)
+        {
+            if (string.IsNullOrEmpty(passportNumber))
+                return null;
+                
+            try
+            {
+                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/Passengers/passport/{passportNumber}");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    return JsonConvert.DeserializeObject<PassengerDto>(content);
+                }
+                
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    return null;
+                    
+                throw new Exception($"Паспорт {passportNumber} тай зорчигчийн мэдээлэл авахад алдаа гарлаа: {response.StatusCode}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Паспортын дугаараар зорчигч хайхад алдаа гарлаа: {ex.Message}");
+                return null;
+            }
+        }
+        
         public async Task<PassengerDto> GetPassengerAsync(string passportNumber)
         {
             var response = await _httpClient.GetAsync($"{_apiBaseUrl}/Passengers/passport/{passportNumber}");
@@ -143,26 +186,75 @@ namespace OrderForm.Services
 
         public async Task<BoardingPassDto> CheckInPassengerAsync(int flightId, string passportNumber, string seatNumber)
         {
-            var checkInDto = new CheckInDto
+            try
             {
-                FlightId = flightId,
-                PassportNumber = passportNumber,
-                SeatNumber = seatNumber
-            };
-            
-            var json = JsonConvert.SerializeObject(checkInDto);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-            
-            var response = await _httpClient.PostAsync($"{_apiBaseUrl}/Boarding/checkin", content);
-            
-            if (response.IsSuccessStatusCode)
-            {
-                var responseContent = await response.Content.ReadAsStringAsync();
-                return JsonConvert.DeserializeObject<BoardingPassDto>(responseContent) ?? 
-                       new BoardingPassDto { FlightId = flightId, SeatNumber = seatNumber };
+                // Эхлээд хэрэглэгчид суудал оноох API-г ашиглах (новый метод)
+                int passengerId = 0;
+                
+                // Паспортаар хэрэглэгчийн ID-г хайх
+                var passenger = await GetPassengerByPassportAsync(passportNumber);
+                if (passenger != null && passenger.Id > 0)
+                {
+                    passengerId = passenger.Id;
+                    
+                    // Суудал оноох API-г дуудах
+                    var assignResult = await AssignSeatToPassengerAsync(flightId, passengerId, seatNumber);
+                    
+                    if (assignResult)
+                    {
+                        // Хэрэв суудал амжилттай оноогдсон бол, CheckIn хийх
+                        var checkInDto = new CheckInDto
+                        {
+                            FlightId = flightId,
+                            PassportNumber = passportNumber,
+                            SeatNumber = seatNumber
+                        };
+                        
+                        var json = JsonConvert.SerializeObject(checkInDto);
+                        var content = new StringContent(json, Encoding.UTF8, "application/json");
+                        
+                        var response = await _httpClient.PostAsync($"{_apiBaseUrl}/Boarding/checkin", content);
+                        
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var responseContent = await response.Content.ReadAsStringAsync();
+                            return JsonConvert.DeserializeObject<BoardingPassDto>(responseContent) ?? new BoardingPassDto();
+                        }
+                        
+                        throw new Exception($"Зорчигч бүртгэх: {response.StatusCode}");
+                    }
+                    else
+                    {
+                        throw new Exception("Суудал оноох үйлдэл амжилтгүй болсон.");
+                    }
+                }
+                else
+                {
+                    throw new Exception($"{passportNumber} паспортын дугаартай зорчигч олдсонгүй.");
+                }
             }
-            
-            throw new Exception($"Зорчигч бүртгэхэд алдаа гарлаа: {response.StatusCode}");
+            catch (Exception ex)
+            {
+                throw new Exception($"Зорчигч бүртгэх алдаа: {ex.Message}");
+            }
+        }
+        
+        public async Task<bool> AssignSeatToPassengerAsync(int flightId, int passengerId, string seatNumber)
+        {
+            try
+            {
+                // REST API руу шууд хүсэлт илгээх
+                var response = await _httpClient.PostAsync(
+                    $"{_apiBaseUrl}/Boarding/flights/{flightId}/passengers/{passengerId}/seat?seatNumber={seatNumber}", 
+                    new StringContent("", Encoding.UTF8, "application/json"));
+                
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Суудал оноох алдаа: {ex.Message}");
+                return false;
+            }
         }
         
         public async Task<BoardingPassDto> GetBoardingPassByFlightAndPassengerAsync(int flightId, int passengerId)
@@ -192,41 +284,139 @@ namespace OrderForm.Services
 
         public async Task<List<SeatDto>> GetAvailableSeatsAsync(int flightId)
         {
-            var response = await _httpClient.GetAsync($"{_apiBaseUrl}/Flights/{flightId}/seats/available");
-            
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var content = await response.Content.ReadAsStringAsync();
-                return JsonConvert.DeserializeObject<List<SeatDto>>(content) ?? new List<SeatDto>();
+                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/Boarding/flights/{flightId}/seats/available");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var seats = JsonConvert.DeserializeObject<List<SeatDto>>(content);
+                    
+                    if (seats != null)
+                    {
+                        // SeatNumber-ээс Row ба Column талбаруудыг бөглөх
+                        foreach (var seat in seats)
+                        {
+                            ParseSeatNumber(seat);
+                        }
+                    }
+                    
+                    return seats ?? new List<SeatDto>();
+                }
+                
+                // API-ээс өгөгдөл авч чадаагүй үед
+                Console.WriteLine($"Failed to get available seats: {response.StatusCode}");
+                return new List<SeatDto>(); // Хоосон жагсаалт буцаана
             }
-            
-            return new List<SeatDto>();
+            catch (Exception ex)
+            {
+                // Алдаа гарсан үед
+                Console.WriteLine($"Error getting available seats: {ex.Message}");
+                return new List<SeatDto>(); // Хоосон жагсаалт буцаана
+            }
         }
         
         public async Task<List<SeatDto>> GetAllSeatsForFlightAsync(int flightId)
         {
-            var response = await _httpClient.GetAsync($"{_apiBaseUrl}/Flights/{flightId}/seats");
-            
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var content = await response.Content.ReadAsStringAsync();
-                return JsonConvert.DeserializeObject<List<SeatDto>>(content) ?? new List<SeatDto>();
+                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/Boarding/seats/{flightId}");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var seats = JsonConvert.DeserializeObject<List<SeatDto>>(content);
+                    
+                    if (seats != null)
+                    {
+                        // SeatNumber-ээс Row ба Column талбаруудыг бөглөх
+                        foreach (var seat in seats)
+                        {
+                            ParseSeatNumber(seat);
+                        }
+                    }
+                    
+                    return seats ?? new List<SeatDto>();
+                }
+                
+                // API-ээс өгөгдөл авч чадаагүй үед
+                Console.WriteLine($"Failed to get all seats for flight: {response.StatusCode}");
+                return new List<SeatDto>(); // Хоосон жагсаалт буцаана
+            }
+            catch (Exception ex)
+            {
+                // Алдаа гарсан үед
+                Console.WriteLine($"Error getting all seats for flight: {ex.Message}");
+                return new List<SeatDto>(); // Хоосон жагсаалт буцаана
+            }
+        }
+        
+        /// <summary>
+        /// Суудлын дугаараас мөр ба баганыг задлах
+        /// Жишээ нь: "1A" -> Row=1, Column="A"
+        /// </summary>
+        /// <param name="seat">Суудлын мэдээлэл</param>
+        private void ParseSeatNumber(SeatDto seat)
+        {
+            if (string.IsNullOrEmpty(seat.SeatNumber))
+                return;
+            
+            // Тоо ба үсгийг ангилах
+            string rowString = "";
+            string colString = "";
+            
+            foreach (char c in seat.SeatNumber)
+            {
+                if (char.IsDigit(c))
+                    rowString += c;
+                else
+                    colString += c;
             }
             
-            return new List<SeatDto>();
+            // Row талбарт тоон утга оноох
+            if (int.TryParse(rowString, out int rowNumber))
+                seat.Row = rowNumber;
+            else
+                seat.Row = 0; // Дараах үнэ
+            
+            // Column талбарт үсгийг оноох
+            seat.Column = colString;
         }
         
         public async Task<List<SeatDto>> GetAllSeatsAsync(int flightId)
         {
-            var response = await _httpClient.GetAsync($"{_apiBaseUrl}/Boarding/flights/{flightId}/seats/all");
-            
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var content = await response.Content.ReadAsStringAsync();
-                return JsonConvert.DeserializeObject<List<SeatDto>>(content) ?? new List<SeatDto>();
+                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/Boarding/seats/{flightId}");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var seats = JsonConvert.DeserializeObject<List<SeatDto>>(content);
+                    
+                    if (seats != null)
+                    {
+                        // SeatNumber-ээс Row ба Column талбаруудыг бөглөх
+                        foreach (var seat in seats)
+                        {
+                            ParseSeatNumber(seat);
+                        }
+                    }
+                    
+                    return seats ?? new List<SeatDto>();
+                }
+                
+                // API-ээс өгөгдөл авч чадаагүй үед
+                Console.WriteLine($"Failed to get all seats: {response.StatusCode}");
+                return new List<SeatDto>(); // Хоосон жагсаалт буцаана
             }
-            
-            throw new Exception($"Суудлын мэдээлэл авахад алдаа гарлаа: {response.StatusCode}");
+            catch (Exception ex)
+            {
+                // Алдаа гарсан үед
+                Console.WriteLine($"Error getting all seats: {ex.Message}");
+                return new List<SeatDto>(); // Хоосон жагсаалт буцаана
+            }
         }
 
         #endregion

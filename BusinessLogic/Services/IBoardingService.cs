@@ -40,6 +40,15 @@ namespace BusinessLogic.Services
         Task<IEnumerable<BoardingPass>> GetBoardingPassesByFlightAsync(int flightId);
 
         /// <summary>
+        /// Хэрэглэгчид суудал оноох.
+        /// </summary>
+        /// <param name="flightId">Нислэгийн ID</param>
+        /// <param name="passengerId">Зорчигчийн ID</param>
+        /// <param name="seatNumber">Сонгосон суудлын дугаар</param>
+        /// <returns>Суудал оноогдсон бол труе, бусад тохиолдолд алдаа</returns>
+        Task<bool> AssignSeatToPassengerAsync(int flightId, int passengerId, string seatNumber);
+
+        /// <summary>
         /// Тодорхой нислэгийн суудлын боломжит байдлыг шалгах.
         /// </summary>
         /// <param name="flightId">Нислэгийн ID</param>

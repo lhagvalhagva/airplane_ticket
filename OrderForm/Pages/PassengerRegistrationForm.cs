@@ -63,7 +63,7 @@ namespace OrderForm.Pages
         {
             // Формын тохиргоо
             this.Text = "Зорчигч бүртгэх";
-            this.Size = new Size(900, 600);
+            this.Size = new Size(1500, 600);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -76,9 +76,9 @@ namespace OrderForm.Pages
             lblTitle.Location = new Point(20, 20);
             this.Controls.Add(lblTitle);
             
-            // Паспортын дугаар
+            // Паспорт
             lblPassportNumber = new Label();
-            lblPassportNumber.Text = "Паспортын дугаар:";
+            lblPassportNumber.Text = "Паспорт:";
             lblPassportNumber.AutoSize = true;
             lblPassportNumber.Location = new Point(20, 70);
             this.Controls.Add(lblPassportNumber);
@@ -114,7 +114,7 @@ namespace OrderForm.Pages
             
             // Имэйл
             lblEmail = new Label();
-            lblEmail.Text = "Имэйл хаяг:";
+            lblEmail.Text = "Имэйл:";
             lblEmail.AutoSize = true;
             lblEmail.Location = new Point(20, 190);
             this.Controls.Add(lblEmail);
@@ -124,9 +124,9 @@ namespace OrderForm.Pages
             txtEmail.Location = new Point(150, 190);
             this.Controls.Add(txtEmail);
             
-            // Утасны дугаар
+            // Утас
             lblPhoneNumber = new Label();
-            lblPhoneNumber.Text = "Утасны дугаар:";
+            lblPhoneNumber.Text = "Утас:";
             lblPhoneNumber.AutoSize = true;
             lblPhoneNumber.Location = new Point(20, 230);
             this.Controls.Add(lblPhoneNumber);
@@ -136,22 +136,10 @@ namespace OrderForm.Pages
             txtPhoneNumber.Location = new Point(150, 230);
             this.Controls.Add(txtPhoneNumber);
             
-            // Иргэншил
-            lblNationality = new Label();
-            lblNationality.Text = "Иргэншил:";
-            lblNationality.AutoSize = true;
-            lblNationality.Location = new Point(20, 270);
-            this.Controls.Add(lblNationality);
-            
-            txtNationality = new TextBox();
-            txtNationality.Size = new Size(200, 25);
-            txtNationality.Location = new Point(150, 270);
-            this.Controls.Add(txtNationality);
-            
             // Товчнууд
             btnSave = new Button();
             btnSave.Text = "Хадгалах";
-            btnSave.Size = new Size(100, 35);
+            btnSave.Size = new Size(300, 35);
             btnSave.Location = new Point(50, 320);
             btnSave.BackColor = Color.SteelBlue;
             btnSave.ForeColor = Color.White;
@@ -160,8 +148,8 @@ namespace OrderForm.Pages
             
             btnClear = new Button();
             btnClear.Text = "Цэвэрлэх";
-            btnClear.Size = new Size(100, 35);
-            btnClear.Location = new Point(160, 320);
+            btnClear.Size = new Size(300, 35);
+            btnClear.Location = new Point(50, 370);
             btnClear.BackColor = Color.Gray;
             btnClear.ForeColor = Color.White;
             btnClear.Click += btnClear_Click;
@@ -169,8 +157,8 @@ namespace OrderForm.Pages
             
             btnCancel = new Button();
             btnCancel.Text = "Хаах";
-            btnCancel.Size = new Size(100, 35);
-            btnCancel.Location = new Point(270, 320);
+            btnCancel.Size = new Size(300, 35);
+            btnCancel.Location = new Point(50, 420);
             btnCancel.BackColor = Color.IndianRed;
             btnCancel.ForeColor = Color.White;
             btnCancel.Click += btnCancel_Click;
@@ -178,8 +166,8 @@ namespace OrderForm.Pages
             
             // Зорчигчийн жагсаалт харуулах DataGridView
             dgvPassengers = new DataGridView();
-            dgvPassengers.Location = new Point(380, 70);
-            dgvPassengers.Size = new Size(500, 480);
+            dgvPassengers.Location = new Point(450, 70);
+            dgvPassengers.Size = new Size(900, 480);
             dgvPassengers.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvPassengers.AllowUserToAddRows = false;
             dgvPassengers.AllowUserToDeleteRows = false;

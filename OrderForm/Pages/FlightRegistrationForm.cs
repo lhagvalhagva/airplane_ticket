@@ -1,377 +1,397 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Configuration;
+using System.Text;
 using OrderForm.Models;
 using OrderForm.Services;
-using System.Configuration;
-using System.Threading.Tasks;
 
 namespace OrderForm.Pages
 {
     public class FlightRegistrationForm : Form
     {
-        private readonly ApiService _apiService;
-        private readonly string _apiBaseUrl;
-
-        // UI элементүүд
-        private Label lblTitle;
-        private Label lblFlightNumber;
-        private Label lblDepartureCity;
-        private Label lblArrivalCity;
-        private Label lblDepartureTime;
-        private Label lblArrivalTime;
-        private Label lblStatus;
-        
         private TextBox txtFlightNumber;
+        private Label lblFlightNumber;
         private TextBox txtDepartureCity;
+        private Label lblDepartureCity;
         private TextBox txtArrivalCity;
-        private ComboBox cmbStatus;
-        private DateTimePicker dtpDepartureDate;
+        private Label lblArrivalCity;
         private DateTimePicker dtpDepartureTime;
-        private DateTimePicker dtpArrivalDate;
+        private Label lblDepartureTime;
         private DateTimePicker dtpArrivalTime;
-        
+        private Label lblArrivalTime;
+        private TextBox txtCapacity;
+        private Label lblCapacity;
         private Button btnSave;
         private Button btnCancel;
         private Button btnClear;
-        
         private DataGridView dgvFlights;
-        
+        private Button btnRefresh;
+        private List<FlightDto> _flights;
+        private ApiService _apiService;
+
         public FlightRegistrationForm()
         {
-            // API Service үүсгэх
-            _apiBaseUrl = ConfigurationManager.AppSettings["ApiBaseUrl"] ?? "http://localhost:5027/api";
-            _apiService = new ApiService(_apiBaseUrl);
-            
-            InitializeComponents();
-            // Асинхрон кодыг хэрэгжүүлэхдээ Task.Run ашиглах нь илүү зөв
-            Task.Run(() => {
-                try
-                {
-                    // async/await ашиглалгүйгээр хэрэгжүүлэх
-                    var loadTask = LoadFlightsAsync();
-                    loadTask.Wait(); // Task дуусахыг хүлээх
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Нислэгийн мэдээлэл авахад алдаа гарлаа: {ex.Message}", "Алдаа", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            });
+            // Получаем базовый URL из App.config
+            string apiBaseUrl = System.Configuration.ConfigurationManager.AppSettings["ApiBaseUrl"];
+            _apiService = new ApiService(apiBaseUrl);
+            InitializeComponent();
         }
-        
-        private void InitializeComponents()
+
+        private void InitializeComponent()
         {
             // Формын тохиргоо
             this.Text = "Нислэг бүртгэх";
-            this.Size = new Size(1100, 650);
+            this.Size = new Size(1900, 950);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
+            this.MinimizeBox = false;
             
-            // Гарчиг
-            lblTitle = new Label();
-            lblTitle.Text = "НИСЛЭГ БҮРТГЭХ";
+            // Бүртгэлтийн хэсэг, зүүн хэсэг
+
+            // Гарчиг текст
+            Label lblTitle = new Label();
+            lblTitle.Text = "Нислэг бүртгэх";
             lblTitle.Font = new Font("Arial", 16, FontStyle.Bold);
             lblTitle.AutoSize = true;
             lblTitle.Location = new Point(20, 20);
             this.Controls.Add(lblTitle);
-            
+
             // Нислэгийн дугаар
             lblFlightNumber = new Label();
             lblFlightNumber.Text = "Нислэгийн дугаар:";
             lblFlightNumber.AutoSize = true;
             lblFlightNumber.Location = new Point(20, 70);
             this.Controls.Add(lblFlightNumber);
-            
+
             txtFlightNumber = new TextBox();
             txtFlightNumber.Size = new Size(200, 25);
             txtFlightNumber.Location = new Point(150, 70);
             this.Controls.Add(txtFlightNumber);
-            
-            // Хөдлөх хот
+
+            // Хөдөлөх хот
             lblDepartureCity = new Label();
-            lblDepartureCity.Text = "Хөдлөх хот:";
+            lblDepartureCity.Text = "Хөдөлөх хот:";
             lblDepartureCity.AutoSize = true;
             lblDepartureCity.Location = new Point(20, 110);
             this.Controls.Add(lblDepartureCity);
-            
+
             txtDepartureCity = new TextBox();
             txtDepartureCity.Size = new Size(200, 25);
             txtDepartureCity.Location = new Point(150, 110);
             this.Controls.Add(txtDepartureCity);
-            
+
             // Очих хот
             lblArrivalCity = new Label();
             lblArrivalCity.Text = "Очих хот:";
             lblArrivalCity.AutoSize = true;
             lblArrivalCity.Location = new Point(20, 150);
             this.Controls.Add(lblArrivalCity);
-            
+
             txtArrivalCity = new TextBox();
             txtArrivalCity.Size = new Size(200, 25);
             txtArrivalCity.Location = new Point(150, 150);
             this.Controls.Add(txtArrivalCity);
-            
-            // Хөдлөх огноо цаг
+
+            // Хөдлөх цаг
             lblDepartureTime = new Label();
-            lblDepartureTime.Text = "Хөдлөх огноо цаг:";
+            lblDepartureTime.Text = "Хөдлөх цаг:";
             lblDepartureTime.AutoSize = true;
             lblDepartureTime.Location = new Point(20, 190);
             this.Controls.Add(lblDepartureTime);
-            
-            dtpDepartureDate = new DateTimePicker();
-            dtpDepartureDate.Format = DateTimePickerFormat.Short;
-            dtpDepartureDate.Size = new Size(120, 25);
-            dtpDepartureDate.Location = new Point(150, 190);
-            this.Controls.Add(dtpDepartureDate);
-            
+
             dtpDepartureTime = new DateTimePicker();
-            dtpDepartureTime.Format = DateTimePickerFormat.Time;
-            dtpDepartureTime.ShowUpDown = true;
-            dtpDepartureTime.Size = new Size(80, 25);
-            dtpDepartureTime.Location = new Point(280, 190);
+            dtpDepartureTime.Format = DateTimePickerFormat.Custom;
+            dtpDepartureTime.CustomFormat = "yyyy-MM-dd HH:mm";
+            dtpDepartureTime.Size = new Size(200, 25);
+            dtpDepartureTime.Location = new Point(150, 190);
             this.Controls.Add(dtpDepartureTime);
-            
-            // Ирэх огноо цаг
+
+            // Очих цаг
             lblArrivalTime = new Label();
-            lblArrivalTime.Text = "Ирэх огноо цаг:";
+            lblArrivalTime.Text = "Очих цаг:";
             lblArrivalTime.AutoSize = true;
             lblArrivalTime.Location = new Point(20, 230);
             this.Controls.Add(lblArrivalTime);
-            
-            dtpArrivalDate = new DateTimePicker();
-            dtpArrivalDate.Format = DateTimePickerFormat.Short;
-            dtpArrivalDate.Size = new Size(120, 25);
-            dtpArrivalDate.Location = new Point(150, 230);
-            this.Controls.Add(dtpArrivalDate);
-            
+
             dtpArrivalTime = new DateTimePicker();
-            dtpArrivalTime.Format = DateTimePickerFormat.Time;
-            dtpArrivalTime.ShowUpDown = true;
-            dtpArrivalTime.Size = new Size(80, 25);
-            dtpArrivalTime.Location = new Point(280, 230);
+            dtpArrivalTime.Format = DateTimePickerFormat.Custom;
+            dtpArrivalTime.CustomFormat = "yyyy-MM-dd HH:mm";
+            dtpArrivalTime.Size = new Size(200, 25);
+            dtpArrivalTime.Location = new Point(150, 230);
             this.Controls.Add(dtpArrivalTime);
-            
-            // Онгоцны мэдээлэл хассан
-            
-            // Нислэгийн төлөв
-            lblStatus = new Label();
-            lblStatus.Text = "Төлөв:";
-            lblStatus.AutoSize = true;
-            lblStatus.Location = new Point(20, 310);
-            this.Controls.Add(lblStatus);
-            
-            cmbStatus = new ComboBox();
-            cmbStatus.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbStatus.Size = new Size(200, 25);
-            cmbStatus.Location = new Point(150, 310);
-            
-            // Нислэгийн төлөвүүд
-            foreach (FlightStatus status in Enum.GetValues(typeof(FlightStatus)))
-            {
-                cmbStatus.Items.Add(status);
-            }
-            
-            cmbStatus.SelectedIndex = 0; // Default to "Scheduled"
-            this.Controls.Add(cmbStatus);
-            
+
+            // Суудлын тоо
+            lblCapacity = new Label();
+            lblCapacity.Text = "Суудлын тоо:";
+            lblCapacity.AutoSize = true;
+            lblCapacity.Location = new Point(20, 270);
+            this.Controls.Add(lblCapacity);
+
+            txtCapacity = new TextBox();
+            txtCapacity.Size = new Size(200, 25);
+            txtCapacity.Location = new Point(150, 270);
+            this.Controls.Add(txtCapacity);
+
             // Товчнууд
             btnSave = new Button();
             btnSave.Text = "Хадгалах";
             btnSave.Size = new Size(100, 35);
-            btnSave.Location = new Point(50, 360);
+            btnSave.Location = new Point(50, 320);
             btnSave.BackColor = Color.SteelBlue;
             btnSave.ForeColor = Color.White;
             btnSave.Click += btnSave_Click;
             this.Controls.Add(btnSave);
-            
+
             btnClear = new Button();
             btnClear.Text = "Цэвэрлэх";
             btnClear.Size = new Size(100, 35);
-            btnClear.Location = new Point(160, 360);
+            btnClear.Location = new Point(160, 320);
             btnClear.BackColor = Color.Gray;
             btnClear.ForeColor = Color.White;
             btnClear.Click += btnClear_Click;
             this.Controls.Add(btnClear);
-            
+
             btnCancel = new Button();
             btnCancel.Text = "Хаах";
             btnCancel.Size = new Size(100, 35);
-            btnCancel.Location = new Point(270, 360);
+            btnCancel.Location = new Point(270, 320);
             btnCancel.BackColor = Color.IndianRed;
             btnCancel.ForeColor = Color.White;
             btnCancel.Click += btnCancel_Click;
             this.Controls.Add(btnCancel);
             
-            // Нислэгийн жагсаалт харуулах DataGridView
+            // Нислэгийн жагсаалтын хэсэг, баруун талд
+            Label lblFlightsList = new Label();
+            lblFlightsList.Text = "Нислэгийн жагсаалт";
+            lblFlightsList.Font = new Font("Arial", 16, FontStyle.Bold);
+            lblFlightsList.AutoSize = true;
+            lblFlightsList.Location = new Point(500, 20);
+            this.Controls.Add(lblFlightsList);
+            
+            // Шинэчлэх товч
+            btnRefresh = new Button();
+            btnRefresh.Text = "Шинэчлэх";
+            btnRefresh.Size = new Size(100, 35);
+            btnRefresh.Location = new Point(700, 20);
+            btnRefresh.BackColor = Color.SteelBlue;
+            btnRefresh.ForeColor = Color.White;
+            btnRefresh.Click += btnRefresh_Click;
+            this.Controls.Add(btnRefresh);
+            
+            // Нислэгийн хүснэгт
             dgvFlights = new DataGridView();
-            dgvFlights.Location = new Point(380, 70);
-            dgvFlights.Size = new Size(700, 520);
+            dgvFlights.Location = new Point(500, 70);
+            dgvFlights.Size = new Size(1350, 800);
             dgvFlights.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvFlights.AllowUserToAddRows = false;
             dgvFlights.AllowUserToDeleteRows = false;
             dgvFlights.ReadOnly = true;
             dgvFlights.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvFlights.MultiSelect = false;
-            dgvFlights.BackgroundColor = Color.White;
-            dgvFlights.CellDoubleClick += dgvFlights_CellDoubleClick;
+            dgvFlights.BackgroundColor = SystemColors.Control;
+            dgvFlights.CellClick += dgvFlights_CellClick;
+            
+            // Баганууд
+            dgvFlights.Columns.Add("Id", "ID");
+            dgvFlights.Columns.Add("FlightNumber", "Нислэгийн дугаар");
+            dgvFlights.Columns.Add("DepartureCity", "Хөдлөх хот");
+            dgvFlights.Columns.Add("ArrivalCity", "Очих хот");
+            dgvFlights.Columns.Add("DepartureTime", "Хөдлөх цаг");
+            dgvFlights.Columns.Add("ArrivalTime", "Очих цаг");
+            dgvFlights.Columns.Add("Status", "Төлөв");
             this.Controls.Add(dgvFlights);
+            
+            // Форм ачаалагдахад рейсүүдийг авах
+            this.Load += async (s, e) => await LoadFlightsAsync();
+        }
+
+        private async void btnSave_Click(object sender, EventArgs e)
+        {
+            if (ValidateInput())
+            {
+                try
+                {
+                    // Создаваем класс для отправки данных о рейсе
+                    var flight = new FlightDto
+                    {
+                        FlightNumber = txtFlightNumber.Text,
+                        DepartureCity = txtDepartureCity.Text,
+                        ArrivalCity = txtArrivalCity.Text,
+                        DepartureTime = dtpDepartureTime.Value,
+                        ArrivalTime = dtpArrivalTime.Value
+                        // Свойство Capacity передаем через дополнительный параметр
+                    };
+                    
+                    // Добавляем количество мест в запрос
+                    int capacity = int.Parse(txtCapacity.Text);
+                    
+                    // Так как в API нет прямой передачи параметра capacity,
+                    // мы можем добавить его в новое поле в URL или реализовать генерацию мест на стороне формы
+                    // Регистрируем рейс через API
+                    bool success = await _apiService.RegisterFlightAsync(flight);
+
+                    if (success)
+                    {
+                        MessageBox.Show("Нислэг амжилттай бүртгэгдлээ", "Амжилттай",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        ClearFields();
+                        
+                        // Нислэгийн жагсаалтыг шинэчлэх
+                        await LoadFlightsAsync();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Нислэг бүртгэхэд алдаа гарлаа", "Алдаа",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Алдаа: {ex.Message}", "Алдаа",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            ClearFields();
+        }
+
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+        
+        private async void btnRefresh_Click(object sender, EventArgs e)
+        {
+            await LoadFlightsAsync();
         }
         
         private async Task LoadFlightsAsync()
         {
             try
             {
-                // Нислэгийн жагсаалт авах
-                var flights = await _apiService.GetAllFlightsAsync();
+                // Загрузка списка рейсов через API
+                _flights = await _apiService.GetAllFlightsAsync();
                 
-                dgvFlights.DataSource = null;
-                dgvFlights.Columns.Clear();
+                // Очистка таблицы
+                dgvFlights.Rows.Clear();
                 
-                dgvFlights.DataSource = flights;
-                
-                // Харуулах багануудыг тохируулах
-                if (dgvFlights.Columns["Id"] != null)
-                    dgvFlights.Columns["Id"].Visible = false;
-                
-                if (dgvFlights.Columns["FlightNumber"] != null)
-                    dgvFlights.Columns["FlightNumber"].HeaderText = "Нислэгийн дугаар";
-                
-                if (dgvFlights.Columns["DepartureCity"] != null)
-                    dgvFlights.Columns["DepartureCity"].HeaderText = "Хөдлөх хот";
-                
-                if (dgvFlights.Columns["ArrivalCity"] != null)
-                    dgvFlights.Columns["ArrivalCity"].HeaderText = "Очих хот";
-                
-                if (dgvFlights.Columns["DepartureTime"] != null)
-                    dgvFlights.Columns["DepartureTime"].HeaderText = "Хөдлөх цаг";
-                
-                if (dgvFlights.Columns["ArrivalTime"] != null)
-                    dgvFlights.Columns["ArrivalTime"].HeaderText = "Ирэх цаг";
-                
-                // Aircraft багана хассан
-                
-                if (dgvFlights.Columns["Status"] != null)
-                    dgvFlights.Columns["Status"].HeaderText = "Төлөв";
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Нислэгийн жагсаалт авахад алдаа гарлаа: {ex.Message}", "Алдаа", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-        
-        private void dgvFlights_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex >= 0)
-            {
-                var flights = dgvFlights.DataSource as List<FlightDto>;
-                if (flights != null && flights.Count > e.RowIndex)
+                // Заполнение таблицы данными
+                foreach (var flight in _flights)
                 {
-                    var selectedFlight = flights[e.RowIndex];
+                    string status = GetFlightStatusText(flight.Status);
                     
-                    // Нислэгийн мэдээллийг оролтын талбарт нөхөх
-                    txtFlightNumber.Text = selectedFlight.FlightNumber;
-                    txtDepartureCity.Text = selectedFlight.DepartureCity;
-                    txtArrivalCity.Text = selectedFlight.ArrivalCity;
-                    cmbStatus.SelectedItem = selectedFlight.Status;
-                    
-                    dtpDepartureDate.Value = selectedFlight.DepartureTime.Date;
-                    dtpDepartureTime.Value = selectedFlight.DepartureTime;
-                    
-                    dtpArrivalDate.Value = selectedFlight.ArrivalTime.Date;
-                    dtpArrivalTime.Value = selectedFlight.ArrivalTime;
-                }
-            }
-        }
-        
-        private async void btnSave_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                // Талбаруудын хоосон эсэхийг шалгах
-                if (string.IsNullOrWhiteSpace(txtFlightNumber.Text) ||
-                    string.IsNullOrWhiteSpace(txtDepartureCity.Text) ||
-                    string.IsNullOrWhiteSpace(txtArrivalCity.Text))
-                {
-                    MessageBox.Show("Нислэгийн дугаар, хөдлөх болон очих цэг заавал оруулна уу!", "Анхааруулга", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-                
-                // Нислэгийн хөдлөх огноо цаг нэгтгэх
-                DateTime departureDateTime = dtpDepartureDate.Value.Date.Add(dtpDepartureTime.Value.TimeOfDay);
-                
-                // Нислэгийн ирэх огноо цаг нэгтгэх
-                DateTime arrivalDateTime = dtpArrivalDate.Value.Date.Add(dtpArrivalTime.Value.TimeOfDay);
-                
-                // Огноо цагийн хяналт
-                if (departureDateTime >= arrivalDateTime)
-                {
-                    MessageBox.Show("Нислэгийн ирэх цаг нь хөдлөх цагаас хойш байх ёстой!", "Анхааруулга", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-                
-                // Нислэгийн мэдээлэл
-                var flight = new FlightDto
-                {
-                    FlightNumber = txtFlightNumber.Text.Trim(),
-                    DepartureCity = txtDepartureCity.Text.Trim(),
-                    ArrivalCity = txtArrivalCity.Text.Trim(),
-                    DepartureTime = departureDateTime,
-                    ArrivalTime = arrivalDateTime,
-                    Status = (FlightStatus)cmbStatus.SelectedItem
-                };
-                
-                // Нислэг бүртгэх
-                bool success = await _apiService.RegisterFlightAsync(flight);
-                
-                if (success)
-                {
-                    MessageBox.Show("Нислэг амжилттай бүртгэгдлээ.", "Амжилттай", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    ClearFields();
-                    
-                    // Жагсаалтыг шинэчлэх
-                    try {
-                        await LoadFlightsAsync();
-                    } catch (Exception ex) {
-                        MessageBox.Show($"Нислэгийн жагсаалт шинэчлэхэд алдаа гарлаа: {ex.Message}", "Алдаа", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("Нислэг бүртгэхэд алдаа гарлаа.", "Алдаа", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    dgvFlights.Rows.Add(
+                        flight.Id,
+                        flight.FlightNumber,
+                        flight.DepartureCity,
+                        flight.ArrivalCity,
+                        flight.DepartureTime.ToString("yyyy-MM-dd HH:mm"),
+                        flight.ArrivalTime.ToString("yyyy-MM-dd HH:mm"),
+                        status
+                    );
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Нислэг бүртгэхэд алдаа гарлаа: {ex.Message}", "Алдаа", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Нислэгүүдийг ачаалж чадсангүй: {ex.Message}", "Алдаа",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
         
-        private void btnClear_Click(object sender, EventArgs e)
+        private void dgvFlights_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            ClearFields();
+            if (e.RowIndex >= 0 && e.RowIndex < _flights.Count)
+            {
+                // Сонгогдсон нислэгийн мэдээллийг авах
+                var selectedFlight = _flights[e.RowIndex];
+                
+                // Талбаруудыг бөглөх
+                txtFlightNumber.Text = selectedFlight.FlightNumber;
+                txtDepartureCity.Text = selectedFlight.DepartureCity;
+                txtArrivalCity.Text = selectedFlight.ArrivalCity;
+                dtpDepartureTime.Value = selectedFlight.DepartureTime;
+                dtpArrivalTime.Value = selectedFlight.ArrivalTime;
+                
+                // Суудлын тоог харуулах гэж оролдох
+                // Хэрэв АРИ-д суудлын тоог авах арга байвал энд авна
+                txtCapacity.Text = "";
+            }
         }
-        
-        private void btnCancel_Click(object sender, EventArgs e)
+
+        private string GetFlightStatusText(FlightStatus status)
         {
-            this.Close();
+            switch (status)
+            {
+                case FlightStatus.CheckingIn:
+                    return "Бүртгэж байна";
+                case FlightStatus.Boarding:
+                    return "Онгоцонд сууж байна";
+                case FlightStatus.Departed:
+                    return "Ниссэн";
+                case FlightStatus.Delayed:
+                    return "Хойшилсон";
+                case FlightStatus.Cancelled:
+                    return "Цуцалсан";
+                default:
+                    return "Үл мэдэгдэх";
+            }
         }
-        
+
         private void ClearFields()
         {
             txtFlightNumber.Text = string.Empty;
             txtDepartureCity.Text = string.Empty;
             txtArrivalCity.Text = string.Empty;
-            cmbStatus.SelectedIndex = 0;
-            
-            // Огноо цагийг одоо байгаагаар тохируулах
-            dtpDepartureDate.Value = DateTime.Now;
             dtpDepartureTime.Value = DateTime.Now;
-            dtpArrivalDate.Value = DateTime.Now;
             dtpArrivalTime.Value = DateTime.Now.AddHours(2);
-            
-            txtFlightNumber.Focus();
+            txtCapacity.Text = string.Empty;
+        }
+
+        private bool ValidateInput()
+        {
+            if (string.IsNullOrEmpty(txtFlightNumber.Text))
+            {
+                MessageBox.Show("Нислэгийн дугаар оруулна уу", "Анхааруулга",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(txtDepartureCity.Text))
+            {
+                MessageBox.Show("Хөдөлөх хот оруулна уу", "Анхааруулга",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(txtArrivalCity.Text))
+            {
+                MessageBox.Show("Очих хот оруулна уу", "Анхааруулга",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            if (dtpDepartureTime.Value >= dtpArrivalTime.Value)
+            {
+                MessageBox.Show("Очих цаг нь хөдлөх цагаас хойш байх ёстой", "Анхааруулга",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(txtCapacity.Text) || !int.TryParse(txtCapacity.Text, out int capacity) || capacity <= 0)
+            {
+                MessageBox.Show("Суудлын тоо зөв оруулна уу", "Анхааруулга",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            return true;
         }
     }
 }

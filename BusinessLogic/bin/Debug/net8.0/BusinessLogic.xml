@@ -51,6 +51,11 @@
             Бортын нэмэлт агуулгыг текст хэлбэрээр үүсгэх
             </summary>
         </member>
+        <member name="M:BusinessLogic.Services.BoardingService.AssignSeatToPassengerAsync(System.Int32,System.Int32,System.String)">
+            <summary>
+            Хэрэглэгчид суудал оноох
+            </summary>
+        </member>
         <member name="T:BusinessLogic.Services.IBoardingService">
             <summary>
             Онгоцонд суух, бүртгэлийн үйл явцыг удирдах үйлчилгээний интерфейс.
@@ -85,6 +90,15 @@
             </summary>
             <param name="flightId">Нислэгийн ID</param>
             <returns>Онгоцны бүртгэлийн жагсаалт</returns>
+        </member>
+        <member name="M:BusinessLogic.Services.IBoardingService.AssignSeatToPassengerAsync(System.Int32,System.Int32,System.String)">
+            <summary>
+            Хэрэглэгчид суудал оноох.
+            </summary>
+            <param name="flightId">Нислэгийн ID</param>
+            <param name="passengerId">Зорчигчийн ID</param>
+            <param name="seatNumber">Сонгосон суудлын дугаар</param>
+            <returns>Суудал оноогдсон бол труе, бусад тохиолдолд алдаа</returns>
         </member>
         <member name="M:BusinessLogic.Services.IBoardingService.IsSeatAvailableAsync(System.Int32,System.String)">
             <summary>

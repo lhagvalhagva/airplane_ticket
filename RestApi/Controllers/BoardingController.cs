@@ -193,6 +193,38 @@ namespace RestApi.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        
+        /// <summary>
+        /// Хэрэглэгчид суудал оноох.
+        /// </summary>
+        /// <param name="flightId">Нислэгийн ID</param>
+        /// <param name="passengerId">Зорчигчийн ID</param>
+        /// <param name="seatNumber">Суудлын дугаар</param>
+        /// <returns>Суудал амжилттай оноогдсон эсэх мэдээлэл</returns>
+        /// <response code="200">Суудал амжилттай оноогдсон</response>
+        /// <response code="404">Нислэг, зорчигч эсвэл суудал олдсонгүй</response>
+        /// <response code="409">Суудал аль хэдийн эзэмшигдсэн</response>
+        [HttpPost("flights/{flightId}/passengers/{passengerId}/seat")]
+        public async Task<ActionResult<bool>> AssignSeatToPassenger(int flightId, int passengerId, [FromQuery] string seatNumber)
+        {
+            try
+            {
+                var result = await _boardingService.AssignSeatToPassengerAsync(flightId, passengerId, seatNumber);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 
     /// <summary>

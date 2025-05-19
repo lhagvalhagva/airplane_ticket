@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using OrderForm.Controls;
+
 using OrderForm.Models;
 using OrderForm.Pages;
 using OrderForm.Services;
+using OrderForm.Controls;
 using System.Configuration;
 using System.Linq;
 
@@ -21,8 +22,10 @@ namespace OrderForm
         private List<SeatDto> _allSeats = new List<SeatDto>();
         private PassengerDto? _currentPassenger;
         private FlightDto? _selectedFlight;
-        private SeatMapUserControl _seatMapControl;
         private List<PassengerDto> _flightPassengers = new List<PassengerDto>();
+        
+        // Добавляем контрол для отображения карты мест
+        private SimpleSeatMap _seatMap;
 
         public Form1()
         {
@@ -38,30 +41,29 @@ namespace OrderForm
             this.FormBorderStyle = FormBorderStyle.Sizable;
             this.AutoScroll = true;
             
-            // Суудлын зураглал үүсгэх
-            InitializeSeatMap();
+            // Инициализируем контрол для отображения карты мест
+            _seatMap = new SimpleSeatMap();
+            _seatMap.Location = new Point(40, 250);
+            _seatMap.Size = new Size(700, 450);
+            _seatMap.SeatSelected += SeatMap_SeatSelected;
+            this.Controls.Add(_seatMap);
+            
+            // Добавляем лейбл с информацией о выбранном месте
+            Label lblSeatMapHeader = new Label();
+            lblSeatMapHeader.Text = "Суудлын зураг";
+            lblSeatMapHeader.Font = new Font("Arial", 12, FontStyle.Bold);
+            lblSeatMapHeader.AutoSize = true;
+            lblSeatMapHeader.Location = new Point(450, 190);
+            this.Controls.Add(lblSeatMapHeader);
             
             // Формын уншиж эхлэх үйл явц
             this.Load += async (s, e) => await LoadFlightsAsync();
+            
+            // Суудал бүртгэх товчны эвентийг холбох
+            this.btnCheckIn.Click += AsyncCheckInPassenger;
         }
         
-        private void InitializeSeatMap()
-        {
-            // Суудлын зураглал үүсгэх
-            _seatMapControl = new SeatMapUserControl();
-            _seatMapControl.Location = new Point(620, 100);
-            _seatMapControl.Size = new Size(600, 500);
-            _seatMapControl.SeatSelected += SeatMapControl_SeatSelected;
-            this.Controls.Add(_seatMapControl);
-        }
-        
-        private void SeatMapControl_SeatSelected(object sender, SeatSelectedEventArgs e)
-        {
-            if (_currentPassenger != null && e.SelectedSeat != null)
-            {
-                txtSeatNumber.Text = e.SelectedSeat.SeatNumber;
-            }
-        }
+
         
         // Өгөгдлийн сан үүсгэх функц хассан
         
@@ -129,6 +131,11 @@ namespace OrderForm
         
         private async void cmbFlights_SelectedIndexChanged(object sender, EventArgs e)
         {
+            await FlightSelectedAsync();
+        }
+        
+        private async Task FlightSelectedAsync()
+        {
             _selectedFlight = GetSelectedFlight();
             
             if (_selectedFlight != null)
@@ -137,7 +144,58 @@ namespace OrderForm
                 
                 // Нислэгийн зорчигчид болон суудлыг авах
                 await LoadFlightPassengersAsync(_selectedFlight.Id);
-                await LoadAllSeatsAsync(_selectedFlight.Id);
+                await LoadAllSeatsAsync(_selectedFlight.Id); // загрузка оригинальных данных о местах
+                await UpdateSeatMapAsync(_selectedFlight.Id); // обновление карты мест
+            }
+            else
+            {
+                // Нислэг сонгогдоогүй - сбрасываем карту мест
+                lblFlightInfo.Text = "Нислэг сонгоно уу";
+                _seatMap.Controls.Clear();
+                _allSeats.Clear();
+            }
+        }
+        
+        // Метод для обновления карты мест
+        private async Task UpdateSeatMapAsync(int flightId)
+        {
+            try
+            {
+                lblStatus.Text = "Суудлын мэдээллийг ачааллаж байна...";
+                
+                // Получаем места с API
+                var seats = await _apiService.GetAllSeatsAsync(flightId);
+                
+                // Обновляем карту мест
+                _seatMap.CreateSeatMap(seats);
+                
+                lblStatus.Text = $"{seats.Count} суудал олдлоо";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Суудлын мэдээлэл авахад алдаа гарлаа: {ex.Message}", "Алдаа", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                lblStatus.Text = "Суудлын мэдээлэл авахад алдаа гарлаа";
+            }
+        }
+        
+        // Суудал сонгосон үед дуудагдах үйл явдал
+        private void SeatMap_SeatSelected(object sender, SeatEventArgs e)
+        {
+            // Хэрэв суудал сонгогдсон бол
+            if (!string.IsNullOrEmpty(e.SeatNumber))
+            {
+                // Суудлын дугаарыг хадгалах
+                txtSeatNumber.Text = e.SeatNumber;
+                
+                // Бүртгэх товчийг идэвхжүүлэх
+                btnCheckIn.Enabled = (_currentPassenger != null);
+            }
+            else
+            {
+                // Суудал сонгогдоогүй (сонголт цуцлагдсан)
+                txtSeatNumber.Text = "";
+                btnCheckIn.Enabled = false;
             }
         }
         
@@ -187,7 +245,7 @@ namespace OrderForm
                 
                 if (_allSeats.Count > 0)
                 {
-                    _seatMapControl.InitializeSeats(_allSeats, _availableSeats);
+                    // Суудлын мэдээллийг харуулах статус хэсэгт
                     lblStatus.Text = $"Нийт: {_allSeats.Count} суудал, Боломжтой: {_availableSeats.Count} суудал";
                 }
                 else
@@ -291,7 +349,7 @@ namespace OrderForm
         {
             try
             {
-                lblStatus.Text = "Зорчигчийг бүртгэж байна...";
+                lblStatus.Text = "Зорчигчийг бүртгэж байнашдээ...";
                 
                 var boardingPass = await _apiService.CheckInPassengerAsync(flightId, passportNumber, seatNumber);
                 
@@ -304,14 +362,14 @@ namespace OrderForm
                     lblStatus.Text = "Зорчигч амжилттай бүртгэгдлээ";
                     
                     // Тасалбар хэвлэх
-                    PrintBoardingPass(boardingPass);
+                    ShowBoardingPass(boardingPass);
                     
-                    // Формыг шинэчлэх
-                    await LoadFlightPassengersAsync(flightId);
-                    await LoadAllSeatsAsync(flightId);
+                    // Одоо аппликацийг дахин дуудаж хэрэглэгчийн интерфейсийг шинэчлэх
+                    var result = MessageBox.Show("Одоо суудал амжилттай оноогдсон. Өөрчлөлтүүдийг харахын тулд програмыг дахин ачаалах шаардлагатай.", "Амжилттай", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     
-                    // Формыг дараагийн зорчигчид бэлтгэх
-                    ResetFormForNextPassenger();
+                    // Програмыг дахин ачаална (оператор return-г ашиглан функцийг дуусгана)
+                    Application.Restart();
+                    return; // Методоос гарна, дараах код хэзээ ч ажиллахгүй
                 }
             }
             catch (Exception ex)
@@ -343,13 +401,108 @@ namespace OrderForm
             }
         }
         
+        // Бүртгэх товч дарагдах үед ажиллах асинхрон метод
+        private async void AsyncCheckInPassenger(object sender, EventArgs e)
+        {
+            try
+            {
+                // Шаардлагатай мэдээллүүдийг шалгах
+                if (_selectedFlight == null || _currentPassenger == null || string.IsNullOrEmpty(_seatMap.SelectedSeatNumber))
+                {
+                    MessageBox.Show("Нислэг, зорчигч болон суудал сонгоно уу.", "Анхааруулга", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                
+                // Зорчигчийг бүртгэх үйл явц
+                lblStatus.Text = "Зорчигчийг бүртгэж байна...";
+                
+                // API-д хүсэлт илгээх
+                var boardingPass = await _apiService.CheckInPassengerAsync(_selectedFlight.Id, _currentPassenger.PassportNumber, _seatMap.SelectedSeatNumber);
+                
+                if (boardingPass != null)
+                {
+                    // Амжилттай бүртгэгдсэн вестай
+                    MessageBox.Show($"Зорчигч {_currentPassenger.FirstName} {_currentPassenger.LastName} амжилттай бүртгэгдлээ.\n" +
+                                      $"Нислэг: {_selectedFlight.FlightNumber}\n" +
+                                      $"Чиглэл: {_selectedFlight.DepartureCity} - {_selectedFlight.ArrivalCity}\n" +
+                                      $"Суудал: {_seatMap.SelectedSeatNumber}",
+                                      "Бүртгэл амжилттай", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    
+                    // Тасалбар хэвлэх
+                    ShowBoardingPass(boardingPass);
+                    
+                    // Одоо аппликацийг дахин дуудаж хэрэглэгчийн интерфейсийг шинэчлэх
+                    var result = MessageBox.Show("Одоо суудал амжилттай оноогдсон. Өөрчлөлтүүдийг харахын тулд програмыг дахин ачаалах шаардлагатай.", "Амжилттай", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    
+                    // Програмыг дахин ачаална (оператор return-г ашиглан функцийг дуусгана)
+                    Application.Restart();
+                    return; // Методоос гарна, дараах код хэзээ ч ажиллахгүй
+                    
+                    lblStatus.Text = "Бүртгэл амжилттай хийгдсэн";
+                }
+                else
+                {
+                    MessageBox.Show("Бүртгэхэд алдаа гарлаа. Дахин оролдоно уу.", "Алдаа", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    lblStatus.Text = "Бүртгэхэд алдаа гарлаа";
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Бүртгэхэд алдаа гарлаа: {ex.Message}", "Алдаа", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                lblStatus.Text = "Бүртгэхэд алдаа гарлаа";
+            }
+        }
+        
+        // Тасалбарыг харуулах функц
+        private void ShowBoardingPass(BoardingPassDto boardingPass)
+        {
+            try
+            {
+                // Тасалбарын мэдээллийг бэлтгэх
+                string passengerName = _currentPassenger != null ? $"{_currentPassenger.FirstName} {_currentPassenger.LastName}" : "Unknown";
+                string flightInfo = _selectedFlight != null ? $"{_selectedFlight.FlightNumber} ({_selectedFlight.DepartureCity} - {_selectedFlight.ArrivalCity})" : "Unknown";
+                string departureTime = _selectedFlight != null ? _selectedFlight.DepartureTime.ToString("yyyy-MM-dd HH:mm") : "Unknown";
+                string seatNumber = boardingPass.SeatNumber;
+                
+                // Хэвлэх эсвэл харуулах шаардлагатай мэдээллийг бэлтгэх
+                string boardingPassInfo = 
+                    $"========== НИСЛЭГИЙН СУУДЛЫН ТАСАЛБАР ==========\n\n" +
+                    $"Зорчигчийн нэр: {passengerName}\n" +
+                    $"Чек-ин хийсэн цаг: {DateTime.Now}\n\n" +
+                    $"Нислэг: {flightInfo}\n" +
+                    $"Хөөрөх цаг: {departureTime}\n" +
+                    $"Суудал: {seatNumber}\n\n" +
+                    $"=======================================\n" +
+                    $"Таны нислэг амжилттай болохыг хүсье!";
+                
+                // Хэвлэх эсвэл тасалбарын дэлгэцэнд харуулах
+                MessageBox.Show(boardingPassInfo, "Суудлын тасалбар", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Тасалбар хэвлэхэд алдаа гарлаа: {ex.Message}", "Алдаа", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        
         private void ResetFormForNextPassenger()
         {
+            // Зорчигчийн мэдээллийг цэвэрлэх
             txtPassportSearch.Clear();
             txtPassengerInfo.Clear();
             txtSeatNumber.Clear();
             _currentPassenger = null;
+            
+            // Суудлын сонголтыг цэвэрлэх
+            _seatMap.ClearSelectedSeat();
+            
+            // Бүртгэх товчийг идэвхгүй болгох
+            btnCheckIn.Enabled = false;
+            
+            // Хүснэгтэн дээрх сонголтыг цэвэрлэх
+            dgvPassengers.ClearSelection();
         }
+        
+        // Дублирующийся метод PrintBoardingPass удален, теперь используется ShowBoardingPass
         
         private async void btnChangeStatus_Click(object sender, EventArgs e)
         {
@@ -493,7 +646,7 @@ namespace OrderForm
             cmbStatus.SelectedItem = SelectedStatus;
             
             // OK Button
-            btnOK.Location = new Point(116, 50);
+            btnOK.Location = new Point(116, 60);
             btnOK.Name = "btnOK";
             btnOK.Size = new Size(75, 40);
             btnOK.Text = "OK";
@@ -501,9 +654,9 @@ namespace OrderForm
             btnOK.Click += btnOK_Click;
             
             // Cancel Button
-            btnCancel.Location = new Point(197, 50);
+            btnCancel.Location = new Point(200, 60);
             btnCancel.Name = "btnCancel";
-            btnCancel.Size = new Size(75, 40);
+            btnCancel.Size = new Size(175, 40);
             btnCancel.Text = "Цуцлах";
             btnCancel.UseVisualStyleBackColor = true;
             btnCancel.Click += btnCancel_Click;
@@ -516,7 +669,7 @@ namespace OrderForm
         
         private void SetupForm()
         {
-            ClientSize = new Size(300, 100);
+            ClientSize = new Size(400, 300);
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             MinimizeBox = false;
