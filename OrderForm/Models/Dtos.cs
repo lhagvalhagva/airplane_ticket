@@ -69,4 +69,5 @@ namespace OrderForm.Models
         public string SeatNumber { get; set; } // Seat.SeatNumber-ийн утга
         public DateTime CheckInTime { get; set; }
     }
+    
 }

@@ -91,34 +91,8 @@ namespace OrderForm.Services
             throw new Exception($"Зорчигчийн мэдээлэл авах үед алдаа гарлаа: {response.StatusCode}");
         }
         
-        public async Task<PassengerDto?> GetPassengerByPassportAsync(string passportNumber)
-        {
-            if (string.IsNullOrEmpty(passportNumber))
-                return null;
-                
-            try
-            {
-                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/Passengers/passport/{passportNumber}");
-                
-                if (response.IsSuccessStatusCode)
-                {
-                    var content = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<PassengerDto>(content);
-                }
-                
-                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                    return null;
-                    
-                throw new Exception($"Паспорт {passportNumber} тай зорчигчийн мэдээлэл авахад алдаа гарлаа: {response.StatusCode}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Паспортын дугаараар зорчигч хайхад алдаа гарлаа: {ex.Message}");
-                return null;
-            }
-        }
         
-        public async Task<PassengerDto> GetPassengerAsync(string passportNumber)
+        public async Task<PassengerDto> GetPassengerByPassportNumberAsync(string passportNumber)
         {
             var response = await _httpClient.GetAsync($"{_apiBaseUrl}/Passengers/passport/{passportNumber}");
             
@@ -131,13 +105,9 @@ namespace OrderForm.Services
             throw new Exception($"Зорчигчийн мэдээлэл авахад алдаа гарлаа: {response.StatusCode}");
         }
         
-        // Алдааг засахад зориулж хуучн нэрийг хадгалав
-        public async Task<PassengerDto> GetPassengerByPassportNumberAsync(string passportNumber)
-        {
-            return await GetPassengerAsync(passportNumber);
-        }
 
-        public async Task<List<PassengerDto>> GetFlightPassengersAsync(int flightId)
+
+        public async Task<List<PassengerDto>> GetPassengersByFlightIdAsync(int flightId)
         {
             var response = await _httpClient.GetAsync($"{_apiBaseUrl}/Passengers/flight/{flightId}");
             
@@ -150,11 +120,6 @@ namespace OrderForm.Services
             throw new Exception($"Нислэгийн зорчигчдын мэдээлэл авахад алдаа гарлаа: {response.StatusCode}");
         }
         
-        // Алдааг засахад зориулж хуучн нэрийг хадгалав
-        public async Task<List<PassengerDto>> GetPassengersByFlightIdAsync(int flightId)
-        {
-            return await GetFlightPassengersAsync(flightId);
-        }
         
         public async Task<List<PassengerDto>> GetAllPassengersAsync()
         {
@@ -192,7 +157,7 @@ namespace OrderForm.Services
                 int passengerId = 0;
                 
                 // Паспортаар хэрэглэгчийн ID-г хайх
-                var passenger = await GetPassengerByPassportAsync(passportNumber);
+                var passenger = await GetPassengerByPassportNumberAsync(passportNumber);
                 if (passenger != null && passenger.Id > 0)
                 {
                     passengerId = passenger.Id;
@@ -357,33 +322,47 @@ namespace OrderForm.Services
         /// Жишээ нь: "1A" -> Row=1, Column="A"
         /// </summary>
         /// <param name="seat">Суудлын мэдээлэл</param>
-        private void ParseSeatNumber(SeatDto seat)
-        {
-            if (string.IsNullOrEmpty(seat.SeatNumber))
-                return;
+        // private void ParseSeatNumber(SeatDto seat)
+        // {
+        //     if (string.IsNullOrEmpty(seat.SeatNumber))
+        //         return;
             
-            // Тоо ба үсгийг ангилах
-            string rowString = "";
-            string colString = "";
+        //     // Тоо ба үсгийг ангилах
+        //     string rowString = "";
+        //     string colString = "";
             
-            foreach (char c in seat.SeatNumber)
-            {
-                if (char.IsDigit(c))
-                    rowString += c;
-                else
-                    colString += c;
-            }
+        //     foreach (char c in seat.SeatNumber)
+        //     {
+        //         if (char.IsDigit(c))
+        //             rowString += c;
+        //         else
+        //             colString += c;
+        //     }
             
-            // Row талбарт тоон утга оноох
-            if (int.TryParse(rowString, out int rowNumber))
-                seat.Row = rowNumber;
-            else
-                seat.Row = 0; // Дараах үнэ
+        //     // Row талбарт тоон утга оноох
+        //     if (int.TryParse(rowString, out int rowNumber))
+        //         seat.Row = rowNumber;
+        //     else
+        //         seat.Row = 0; // Дараах үнэ
             
-            // Column талбарт үсгийг оноох
-            seat.Column = colString;
-        }
+        //     // Column талбарт үсгийг оноох
+        //     seat.Column = colString;
+        // }
         
+        private void ParseSeatNumber(SeatDto seat)
+{
+    if (!string.IsNullOrEmpty(seat.SeatNumber) && seat.SeatNumber.Length >= 2)
+    {
+        var rowPart = seat.SeatNumber.Substring(0, seat.SeatNumber.Length - 1);
+        var columnPart = seat.SeatNumber[^1].ToString();
+        if (int.TryParse(rowPart, out int row))
+        {
+            seat.Row = row;
+            seat.Column = columnPart;
+        }
+    }
+}
+
         public async Task<List<SeatDto>> GetAllSeatsAsync(int flightId)
         {
             try

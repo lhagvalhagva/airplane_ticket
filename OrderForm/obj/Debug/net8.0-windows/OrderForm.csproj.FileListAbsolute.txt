@@ -67,3 +67,6 @@ C:\Users\User\Desktop\WINDOWS_PROJECT\OrderForm\obj\Debug\net8.0-windows\OrderFo
 C:\Users\User\Desktop\WINDOWS_PROJECT\OrderForm\obj\Debug\net8.0-windows\OrderForm.Form1.resources
 C:\Users\User\Desktop\WINDOWS_PROJECT\OrderForm\obj\Debug\net8.0-windows\OrderForm.Pages.FlightRegistrationForm.resources
 C:\Users\User\Desktop\WINDOWS_PROJECT\OrderForm\obj\Debug\net8.0-windows\OrderForm.Controls.SeatMapUserControl.resources
+C:\Users\User\Desktop\WINDOWS_PROJECT\OrderForm\obj\Debug\net8.0-windows\OrderForm.Controls.SimpleSeatMapControl.resources
+C:\Users\User\Desktop\WINDOWS_PROJECT\OrderForm\obj\Debug\net8.0-windows\OrderForm.Pages.PassengerRegistrationForm.resources
+C:\Users\User\Desktop\WINDOWS_PROJECT\OrderForm\obj\Debug\net8.0-windows\OrderForm.Pages.FlightStatusForm.resources
