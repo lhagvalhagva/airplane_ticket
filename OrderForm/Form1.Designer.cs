@@ -2,15 +2,8 @@ namespace OrderForm
 {
     partial class Form1
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -22,12 +15,9 @@ namespace OrderForm
 
         #region Windows Form Designer generated code
 
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             mainMenu = new MenuStrip();
             fileMenuItem = new ToolStripMenuItem();
             passengerRegistrationMenuItem = new ToolStripMenuItem();
@@ -40,21 +30,15 @@ namespace OrderForm
             txtPassportSearch = new TextBox();
             btnSearch = new Button();
             txtPassengerInfo = new TextBox();
+            panelSeatMapContainer = new Panel();
             lblSeat = new Label();
             txtSeatNumber = new TextBox();
             dgvPassengers = new DataGridView();
-            PassengerId = new DataGridViewTextBoxColumn();
-            FirstName = new DataGridViewTextBoxColumn();
-            LastName = new DataGridViewTextBoxColumn();
-            PassportNumber = new DataGridViewTextBoxColumn();
-            SeatNumber = new DataGridViewTextBoxColumn();
             lblPassengerCount = new Label();
             btnCheckIn = new Button();
             btnChangeStatus = new Button();
             lblStatus = new Label();
-            mainMenu.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)dgvPassengers).BeginInit();
-            SuspendLayout();
+            
             // 
             // mainMenu
             // 
@@ -79,21 +63,18 @@ namespace OrderForm
             passengerRegistrationMenuItem.Name = "passengerRegistrationMenuItem";
             passengerRegistrationMenuItem.Size = new Size(359, 44);
             passengerRegistrationMenuItem.Text = "Зорчигч бүртгэх";
-            passengerRegistrationMenuItem.Click += passengerRegistrationMenuItem_Click;
             // 
             // flightRegistrationMenuItem
             // 
             flightRegistrationMenuItem.Name = "flightRegistrationMenuItem";
             flightRegistrationMenuItem.Size = new Size(359, 44);
             flightRegistrationMenuItem.Text = "Нислэг бүртгэх";
-            flightRegistrationMenuItem.Click += flightRegistrationMenuItem_Click;
             // 
             // exitMenuItem
             // 
             exitMenuItem.Name = "exitMenuItem";
             exitMenuItem.Size = new Size(359, 44);
             exitMenuItem.Text = "Гарах";
-            exitMenuItem.Click += exitMenuItem_Click;
             // 
             // lblFlight
             // 
@@ -116,7 +97,6 @@ namespace OrderForm
             cmbFlights.Name = "cmbFlights";
             cmbFlights.Size = new Size(970, 40);
             cmbFlights.TabIndex = 2;
-            cmbFlights.SelectedIndexChanged += cmbFlights_SelectedIndexChanged;
             // 
             // lblFlightInfo
             // 
@@ -159,7 +139,6 @@ namespace OrderForm
             btnSearch.TabIndex = 7;
             btnSearch.Text = "Хайх";
             btnSearch.UseVisualStyleBackColor = true;
-            btnSearch.Click += btnSearch_Click;
             // 
             // txtPassengerInfo
             // 
@@ -172,6 +151,15 @@ namespace OrderForm
             txtPassengerInfo.Size = new Size(667, 38);
             txtPassengerInfo.TabIndex = 8;
             // 
+            // panelSeatMapContainer
+            // 
+            panelSeatMapContainer.Location = new Point(40, 250);
+            panelSeatMapContainer.Margin = new Padding(6, 7, 6, 7);
+            panelSeatMapContainer.Name = "panelSeatMapContainer";
+            panelSeatMapContainer.Size = new Size(700, 450);
+            panelSeatMapContainer.TabIndex = 9;
+            panelSeatMapContainer.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom;
+            // 
             // lblSeat
             // 
             lblSeat.AutoSize = true;
@@ -180,7 +168,7 @@ namespace OrderForm
             lblSeat.Margin = new Padding(6, 0, 6, 0);
             lblSeat.Name = "lblSeat";
             lblSeat.Size = new Size(254, 32);
-            lblSeat.TabIndex = 9;
+            lblSeat.TabIndex = 10;
             lblSeat.Text = "Сонгосон суудал:";
             // 
             // txtSeatNumber
@@ -189,16 +177,16 @@ namespace OrderForm
             txtSeatNumber.Location = new Point(1647, 1494);
             txtSeatNumber.Margin = new Padding(6, 7, 6, 7);
             txtSeatNumber.Name = "txtSeatNumber";
+            txtSeatNumber.ReadOnly = true;
             txtSeatNumber.Size = new Size(212, 38);
-            txtSeatNumber.TabIndex = 10;
+            txtSeatNumber.TabIndex = 11;
             // 
             // dgvPassengers
             // 
             dgvPassengers.AllowUserToAddRows = false;
             dgvPassengers.AllowUserToDeleteRows = false;
             dgvPassengers.BackgroundColor = SystemColors.Control;
-            dgvPassengers.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvPassengers.Columns.AddRange(new DataGridViewColumn[] { PassengerId, FirstName, LastName, PassportNumber, SeatNumber });
+            dgvPassengers.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvPassengers.Location = new Point(1343, 207);
             dgvPassengers.Margin = new Padding(6, 7, 6, 7);
             dgvPassengers.MultiSelect = false;
@@ -207,49 +195,7 @@ namespace OrderForm
             dgvPassengers.RowHeadersWidth = 82;
             dgvPassengers.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvPassengers.Size = new Size(641, 1231);
-            dgvPassengers.TabIndex = 11;
-            dgvPassengers.CellClick += dgvPassengers_CellClick;
-            // 
-            // PassengerId
-            // 
-            PassengerId.HeaderText = "ID";
-            PassengerId.MinimumWidth = 10;
-            PassengerId.Name = "PassengerId";
-            PassengerId.ReadOnly = true;
-            PassengerId.Visible = false;
-            PassengerId.Width = 50;
-            // 
-            // FirstName
-            // 
-            FirstName.HeaderText = "Нэр";
-            FirstName.MinimumWidth = 10;
-            FirstName.Name = "FirstName";
-            FirstName.ReadOnly = true;
-            FirstName.Width = 135;
-            // 
-            // LastName
-            // 
-            LastName.HeaderText = "Овог";
-            LastName.MinimumWidth = 10;
-            LastName.Name = "LastName";
-            LastName.ReadOnly = true;
-            LastName.Width = 135;
-            // 
-            // PassportNumber
-            // 
-            PassportNumber.HeaderText = "Паспортын дугаар";
-            PassportNumber.MinimumWidth = 10;
-            PassportNumber.Name = "PassportNumber";
-            PassportNumber.ReadOnly = true;
-            PassportNumber.Width = 155;
-            // 
-            // SeatNumber
-            // 
-            SeatNumber.HeaderText = "Суудал";
-            SeatNumber.MinimumWidth = 10;
-            SeatNumber.Name = "SeatNumber";
-            SeatNumber.ReadOnly = true;
-            SeatNumber.Width = 135;
+            dgvPassengers.TabIndex = 12;
             // 
             // lblPassengerCount
             // 
@@ -259,7 +205,7 @@ namespace OrderForm
             lblPassengerCount.Margin = new Padding(6, 0, 6, 0);
             lblPassengerCount.Name = "lblPassengerCount";
             lblPassengerCount.Size = new Size(0, 27);
-            lblPassengerCount.TabIndex = 12;
+            lblPassengerCount.TabIndex = 13;
             // 
             // btnCheckIn
             // 
@@ -270,10 +216,9 @@ namespace OrderForm
             btnCheckIn.Margin = new Padding(6, 7, 6, 7);
             btnCheckIn.Name = "btnCheckIn";
             btnCheckIn.Size = new Size(325, 74);
-            btnCheckIn.TabIndex = 13;
+            btnCheckIn.TabIndex = 14;
             btnCheckIn.Text = "Бүртгэх";
             btnCheckIn.UseVisualStyleBackColor = false;
-            btnCheckIn.Click += btnCheckIn_Click;
             // 
             // btnChangeStatus
             // 
@@ -282,10 +227,9 @@ namespace OrderForm
             btnChangeStatus.Margin = new Padding(6, 7, 6, 7);
             btnChangeStatus.Name = "btnChangeStatus";
             btnChangeStatus.Size = new Size(261, 57);
-            btnChangeStatus.TabIndex = 14;
+            btnChangeStatus.TabIndex = 15;
             btnChangeStatus.Text = "Нислэгийн төлөв өөрчлөх";
             btnChangeStatus.UseVisualStyleBackColor = true;
-            btnChangeStatus.Click += btnChangeStatus_Click;
             // 
             // lblStatus
             // 
@@ -309,6 +253,7 @@ namespace OrderForm
             Controls.Add(dgvPassengers);
             Controls.Add(txtSeatNumber);
             Controls.Add(lblSeat);
+            Controls.Add(panelSeatMapContainer);
             Controls.Add(txtPassengerInfo);
             Controls.Add(btnSearch);
             Controls.Add(txtPassportSearch);
@@ -330,29 +275,25 @@ namespace OrderForm
 
         #endregion
 
-        private System.Windows.Forms.MenuStrip mainMenu;
-        private System.Windows.Forms.ToolStripMenuItem fileMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem passengerRegistrationMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem flightRegistrationMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem exitMenuItem;
-        private System.Windows.Forms.Label lblFlight;
-        private System.Windows.Forms.ComboBox cmbFlights;
-        private System.Windows.Forms.Label lblFlightInfo;
-        private System.Windows.Forms.Label lblSearch;
-        private System.Windows.Forms.TextBox txtPassportSearch;
-        private System.Windows.Forms.Button btnSearch;
-        private System.Windows.Forms.TextBox txtPassengerInfo;
-        private System.Windows.Forms.Label lblSeat;
-        private System.Windows.Forms.TextBox txtSeatNumber;
-        private System.Windows.Forms.DataGridView dgvPassengers;
-        private System.Windows.Forms.DataGridViewTextBoxColumn PassengerId;
-        private System.Windows.Forms.DataGridViewTextBoxColumn FirstName;
-        private System.Windows.Forms.DataGridViewTextBoxColumn LastName;
-        private System.Windows.Forms.DataGridViewTextBoxColumn PassportNumber;
-        private System.Windows.Forms.DataGridViewTextBoxColumn SeatNumber;
-        private System.Windows.Forms.Label lblPassengerCount;
-        private System.Windows.Forms.Button btnCheckIn;
-        private System.Windows.Forms.Button btnChangeStatus;
-        private System.Windows.Forms.Label lblStatus;
+        private MenuStrip mainMenu;
+        private ToolStripMenuItem fileMenuItem;
+        private ToolStripMenuItem passengerRegistrationMenuItem;
+        private ToolStripMenuItem flightRegistrationMenuItem;
+        private ToolStripMenuItem exitMenuItem;
+        private Label lblFlight;
+        private ComboBox cmbFlights;
+        private Label lblFlightInfo;
+        private Label lblSearch;
+        private TextBox txtPassportSearch;
+        private Button btnSearch;
+        private TextBox txtPassengerInfo;
+        private Panel panelSeatMapContainer;
+        private Label lblSeat;
+        private TextBox txtSeatNumber;
+        private DataGridView dgvPassengers;
+        private Label lblPassengerCount;
+        private Button btnCheckIn;
+        private Button btnChangeStatus;
+        private Label lblStatus;
     }
 }
