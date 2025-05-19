@@ -17,17 +17,14 @@ namespace RestApi.Controllers
     public class FlightsController : ControllerBase
     {
         private readonly IFlightService _flightService;
-        private readonly INotificationService _notificationService;
 
         /// <summary>
         /// FlightsController-ийн байгуулагч.
         /// </summary>
         /// <param name="flightService">Нислэгийн үйлчилгээ</param>
-        /// <param name="notificationService">Мэдэгдлийн үйлчилгээ</param>
-        public FlightsController(IFlightService flightService, INotificationService notificationService)
+        public FlightsController(IFlightService flightService)
         {
             _flightService = flightService;
-            _notificationService = notificationService;
         }
 
         /// <summary>
@@ -63,26 +60,6 @@ namespace RestApi.Controllers
         }
 
         /// <summary>
-        /// Нислэгийн дугаараар нислэгийн мэдээлэл авах.
-        /// </summary>
-        /// <param name="flightNumber">Нислэгийн дугаар</param>
-        /// <returns>Нислэгийн мэдээлэл</returns>
-        /// <response code="200">Нислэгийн мэдээлэл амжилттай буцаагдсан</response>
-        /// <response code="404">Нислэг олдсонгүй</response>
-        [HttpGet("number/{flightNumber}")]
-        public async Task<ActionResult<Flight>> GetFlightByNumber(string flightNumber)
-        {
-            var flight = await _flightService.GetFlightByNumberAsync(flightNumber);
-
-            if (flight == null)
-            {
-                return NotFound($"Flight with number {flightNumber} not found.");
-            }
-
-            return Ok(flight);
-        }
-
-        /// <summary>
         /// Шинэ нислэг үүсгэх.
         /// </summary>
         /// <param name="flight">Нислэгийн мэдээлэл</param>
@@ -96,6 +73,74 @@ namespace RestApi.Controllers
             {
                 await _flightService.AddFlightAsync(flight);
                 return CreatedAtAction(nameof(GetFlight), new { id = flight.Id }, flight);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Нислэгийн мэдээллийг шинэчлэх.
+        /// </summary>
+        /// <param name="id">Нислэгийн ID</param>
+        /// <param name="flight">Нислэгийн шинэчлэгдсэн мэдээлэл</param>
+        /// <returns>Үйлдлийн үр дүн</returns>
+        /// <response code="204">Нислэгийн мэдээлэл амжилттай шинэчлэгдсэн</response>
+        /// <response code="404">Нислэг олдсонгүй</response>
+        /// <response code="400">Нислэгийн мэдээлэл буруу</response>
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateFlight(int id, [FromBody] Flight flight)
+        {
+            try
+            {
+                if (id != flight.Id)
+                {
+                    return BadRequest("Flight ID in URL does not match ID in request body.");
+                }
+
+                if (!await _flightService.FlightExistsAsync(id))
+                {
+                    return NotFound($"Flight with ID {id} not found.");
+                }
+
+                await _flightService.UpdateFlightAsync(flight);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Нислэг устгах.
+        /// </summary>
+        /// <param name="id">Нислэгийн ID</param>
+        /// <returns>Үйлдлийн үр дүн</returns>
+        /// <response code="204">Нислэг амжилттай устгагдсан</response>
+        /// <response code="404">Нислэг олдсонгүй</response>
+        /// <response code="409">Нислэгт бүртгэлтэй хэрэглэгч эсвэл суудал байгаа тул устгах боломжгүй</response>
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteFlight(int id)
+        {
+            try
+            {
+                if (!await _flightService.FlightExistsAsync(id))
+                {
+                    return NotFound($"Flight with ID {id} not found.");
+                }
+
+                await _flightService.DeleteFlightAsync(id);
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
             }
             catch (Exception ex)
             {
@@ -123,8 +168,6 @@ namespace RestApi.Controllers
                 }
 
                 await _flightService.UpdateFlightStatusAsync(id, statusDto.Status);
-                await _notificationService.NotifyFlightStatusChangedAsync(id, statusDto.Status);
-                
                 return NoContent();
             }
             catch (Exception ex)

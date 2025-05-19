@@ -38,7 +38,7 @@ namespace OrderForm
             btnCheckIn = new Button();
             btnChangeStatus = new Button();
             lblStatus = new Label();
-            
+
             // 
             // mainMenu
             // 

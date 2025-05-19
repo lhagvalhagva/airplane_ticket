@@ -22,12 +22,12 @@ namespace DataAccess
 
         public static async Task InitializeAsync(AirportDbContext context)
         {
+            // Одоогийн өгөгдлийн санг устгаж, шинээр үүсгэх
+            await context.Database.EnsureDeletedAsync();
             await context.Database.EnsureCreatedAsync();
-
-            if (await context.Flights.AnyAsync())
-            {
-                return;
-            }
+            
+            // Өгөгдөл байгаа эсэхийг шалгах шаардлагагүй болсон
+            // Мэдээллийн санг устгасан тул одоо хоосон
 
             var flights = new List<Flight>
             {
@@ -99,17 +99,20 @@ namespace DataAccess
                 new FlightPassenger
                 {
                     FlightId = flights[0].Id,
-                    PassengerId = passengers[0].Id
+                    PassengerId = passengers[0].Id,
+                    RegistrationDate = DateTime.Now.AddHours(-5)
                 },
                 new FlightPassenger
                 {
                     FlightId = flights[0].Id,
-                    PassengerId = passengers[1].Id
+                    PassengerId = passengers[1].Id,
+                    RegistrationDate = DateTime.Now.AddHours(-4)
                 },
                 new FlightPassenger
                 {
                     FlightId = flights[1].Id,
-                    PassengerId = passengers[2].Id
+                    PassengerId = passengers[2].Id,
+                    RegistrationDate = DateTime.Now.AddHours(-3)
                 }
             };
 
@@ -135,6 +138,49 @@ namespace DataAccess
 
             await context.Seats.AddRangeAsync(allSeats);
             await context.SaveChangesAsync();
+
+            // Суудлын заримыг захиалагдсан болгох
+            var seat1A = allSeats.FirstOrDefault(s => s.FlightId == flights[0].Id && s.SeatNumber == "1A");
+            var seat2B = allSeats.FirstOrDefault(s => s.FlightId == flights[0].Id && s.SeatNumber == "2B");
+            var seat3C = allSeats.FirstOrDefault(s => s.FlightId == flights[1].Id && s.SeatNumber == "3C");
+
+            if (seat1A != null && seat2B != null && seat3C != null)
+            {
+                seat1A.IsOccupied = true;
+                seat2B.IsOccupied = true;
+                seat3C.IsOccupied = true;
+
+                await context.SaveChangesAsync();
+
+                // Тасалбарууд үүсгэх
+                var boardingPasses = new List<BoardingPass>
+                {
+                    new BoardingPass
+                    {
+                        FlightId = flights[0].Id,
+                        PassengerId = passengers[0].Id,
+                        SeatId = seat1A.Id,
+                        CheckInTime = DateTime.Now.AddHours(-1)
+                    },
+                    new BoardingPass
+                    {
+                        FlightId = flights[0].Id,
+                        PassengerId = passengers[1].Id,
+                        SeatId = seat2B.Id,
+                        CheckInTime = DateTime.Now.AddMinutes(-30)
+                    },
+                    new BoardingPass
+                    {
+                        FlightId = flights[1].Id,
+                        PassengerId = passengers[2].Id,
+                        SeatId = seat3C.Id,
+                        CheckInTime = DateTime.Now.AddMinutes(-45)
+                    }
+                };
+
+                await context.BoardingPasses.AddRangeAsync(boardingPasses);
+                await context.SaveChangesAsync();
+            }
         }
     }
 } 

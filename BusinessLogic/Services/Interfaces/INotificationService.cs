@@ -24,12 +24,19 @@ namespace BusinessLogic.Services
         Task NotifyBoardingPassIssuedAsync(BoardingPass boardingPass);
 
         /// <summary>
-        /// Суудал захиалагдсан тухай мэдэгдэл илгээх.
+        /// Зорчигч нислэгт бүртгэгдсэн тухай мэдэгдэл илгээх.
         /// </summary>
         /// <param name="flightId">Нислэгийн ID</param>
-        /// <param name="seatNumber">Захиалагдсан суудлын дугаар</param>
         /// <param name="passengerId">Зорчигчийн ID</param>
         /// <returns>Үйлдлийн үр дүн</returns>
-        Task NotifySeatAssignedAsync(int flightId, string seatNumber, int passengerId);
+        Task NotifyPassengerRegisteredAsync(int flightId, int passengerId);
+        
+        /// <summary>
+        /// Зорчигч нислэгээс хасагдсан тухай мэдэгдэл илгээх.
+        /// </summary>
+        /// <param name="flightId">Нислэгийн ID</param>
+        /// <param name="passengerId">Зорчигчийн ID</param>
+        /// <returns>Үйлдлийн үр дүн</returns>
+        Task NotifyPassengerUnregisteredAsync(int flightId, int passengerId);
     }
-} 
+}

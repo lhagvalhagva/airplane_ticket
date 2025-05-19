@@ -18,9 +18,27 @@ namespace BusinessLogic.Services
             _flightPassengerRepository = flightPassengerRepository;
         }
 
-        public async Task<IEnumerable<Passenger>> GetAllPassengersAsync()
+        public async Task<IEnumerable<Passenger>> GetAllPassengersAsync(string? nameFilter = null, string? passportNumber = null)
         {
-            return await _passengerRepository.GetAllAsync();
+            // Бүх зорчигчдыг авах
+            var passengers = await _passengerRepository.GetAllAsync();
+            
+            // Нэр эсвэл паспортын дугаараар шүүлт хийх
+            if (!string.IsNullOrWhiteSpace(nameFilter))
+            {
+                nameFilter = nameFilter.ToLower();
+                passengers = passengers.Where(p =>
+                    p.FirstName.ToLower().Contains(nameFilter) ||
+                    p.LastName.ToLower().Contains(nameFilter));
+            }
+            
+            if (!string.IsNullOrWhiteSpace(passportNumber))
+            {
+                passengers = passengers.Where(p => 
+                    p.PassportNumber.Contains(passportNumber));
+            }
+            
+            return passengers;
         }
 
         public async Task<Passenger?> GetPassengerByIdAsync(int id)
@@ -52,36 +70,24 @@ namespace BusinessLogic.Services
             await _passengerRepository.SaveChangesAsync();
         }
 
+        public async Task DeletePassengerAsync(int id)
+        {
+            var passenger = await _passengerRepository.GetByIdAsync(id);
+            if (passenger == null)
+                throw new KeyNotFoundException($"Зорчигч ID {id} олдсонгүй.");
+
+            var flightPassengers = await _flightPassengerRepository.FindAsync(fp => fp.PassengerId == id);
+            if (flightPassengers.Any())
+                throw new InvalidOperationException("Энэ зорчигч нислэгүүдэд бүртгэлтэй тул устгах боломжгүй.");
+
+            await _passengerRepository.DeleteAsync(passenger);
+            await _passengerRepository.SaveChangesAsync();
+        }
+
         public async Task<bool> PassengerExistsAsync(int passengerId)
         {
             var passenger = await _passengerRepository.GetByIdAsync(passengerId);
             return passenger != null;
-        }
-        
-        public async Task<IEnumerable<Passenger>> GetPassengersByFlightIdAsync(int flightId)
-        {
-            // Тухайн нислэгт бүртгэлтэй зорчигчдын холбоосыг авах
-            var flightPassengers = await _flightPassengerRepository.FindAsync(fp => fp.FlightId == flightId);
-            if (!flightPassengers.Any())
-            {
-                throw new KeyNotFoundException($"{flightId} дугаартай нислэгт бүртгэлтэй зорчигч олдсонгүй.");
-            }
-            
-            // Зорчигчдын ID-г цуглуулах
-            var passengerIds = flightPassengers.Select(fp => fp.PassengerId).ToList();
-            
-            // Зорчигчдын мэдээллийг авах
-            var result = new List<Passenger>();
-            foreach (var id in passengerIds)
-            {
-                var passenger = await _passengerRepository.GetByIdAsync(id);
-                if (passenger != null)
-                {
-                    result.Add(passenger);
-                }
-            }
-            
-            return result;
         }
     }
 } 

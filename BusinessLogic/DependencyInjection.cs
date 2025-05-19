@@ -45,6 +45,8 @@ namespace BusinessLogic
             services.AddScoped<IPassengerService, PassengerService>();
             services.AddScoped<IBoardingService, BoardingService>();
             services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<ISeatService, SeatService>();
+            services.AddScoped<IFlightPassengerService, FlightPassengerService>();
 
             return services;
         }

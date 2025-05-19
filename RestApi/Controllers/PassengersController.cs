@@ -28,40 +28,27 @@ namespace RestApi.Controllers
 
         /// <summary>
         /// Бүх зорчигчдын мэдээллийг авах.
+        /// Нэр эсвэл паспортын дугаараар хайх боломжтой.
         /// </summary>
+        /// <param name="name">Зорчигчийн нэрээр хайх (заавал биш)</param>
+        /// <param name="passport">Паспортын дугаараар хайх (заавал биш)</param>
         /// <returns>Зорчигчдын жагсаалт</returns>
         /// <response code="200">Зорчигчдын жагсаалт амжилттай буцаагдсан</response>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Passenger>>> GetPassengers()
-        {
-            var passengers = await _passengerService.GetAllPassengersAsync();
-            return Ok(passengers);
-        }
-
-        /// <summary>
-        /// Нислэгийн зорчигчдыг авах
-        /// </summary>
-        /// <param name="flightId">Нислэгийн ID</param>
-        /// <returns>Зорчигчдын жагсаалт</returns>
-        /// <response code="200">Зорчигчдын жагсаалт амжилттай буцаагдсан</response>
-        /// <response code="404">Нислэг олдсонгүй</response>
-        [HttpGet("flight/{flightId}")]
-        public async Task<ActionResult<IEnumerable<Passenger>>> GetFlightPassengers(int flightId)
+        public async Task<ActionResult<IEnumerable<Passenger>>> GetPassengers([FromQuery] string? name = null, [FromQuery] string? passport = null)
         {
             try
             {
-                var passengers = await _passengerService.GetPassengersByFlightIdAsync(flightId);
+                var passengers = await _passengerService.GetAllPassengersAsync(name, passport);
                 return Ok(passengers);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
         }
+
+
 
         /// <summary>
         /// Зорчигчийн ID-аар зорчигчийн мэдээлэл авах.
@@ -83,25 +70,7 @@ namespace RestApi.Controllers
             return Ok(passenger);
         }
 
-        /// <summary>
-        /// Паспортын дугаараар зорчигчийн мэдээлэл авах.
-        /// </summary>
-        /// <param name="passportNumber">Паспортын дугаар</param>
-        /// <returns>Зорчигчийн мэдээлэл</returns>
-        /// <response code="200">Зорчигчийн мэдээлэл амжилттай буцаагдсан</response>
-        /// <response code="404">Зорчигч олдсонгүй</response>
-        [HttpGet("passport/{passportNumber}")]
-        public async Task<ActionResult<Passenger>> GetPassengerByPassport(string passportNumber)
-        {
-            var passenger = await _passengerService.GetPassengerByPassportNumberAsync(passportNumber);
 
-            if (passenger == null)
-            {
-                return NotFound($"Passenger with passport number {passportNumber} not found.");
-            }
-
-            return Ok(passenger);
-        }
 
         /// <summary>
         /// Шинэ зорчигч үүсгэх.
@@ -150,6 +119,40 @@ namespace RestApi.Controllers
 
                 await _passengerService.UpdatePassengerAsync(passenger);
                 return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Зорчигчийг устгах.
+        /// </summary>
+        /// <param name="id">Устгах зорчигчийн ID</param>
+        /// <returns>Үйлдлийн үр дүн</returns>
+        /// <response code="204">Зорчигч амжилттай устгагдсан</response>
+        /// <response code="404">Зорчигч олдсонгүй</response>
+        /// <response code="409">Зорчигч хамааралтай мэдээлэлтэй тул устгах боломжгүй</response>
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeletePassenger(int id)
+        {
+            try
+            {
+                if (!await _passengerService.PassengerExistsAsync(id))
+                {
+                    return NotFound($"Зорчигч ID {id} олдсонгүй.");
+                }
+                await _passengerService.DeletePassengerAsync(id);
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
             }
             catch (Exception ex)
             {

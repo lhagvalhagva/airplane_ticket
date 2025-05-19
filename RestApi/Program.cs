@@ -38,6 +38,8 @@ builder.Services.AddScoped<IFlightService, FlightService>();
 builder.Services.AddScoped<IBoardingService, BoardingService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IPassengerService, PassengerService>();
+builder.Services.AddScoped<ISeatService, SeatService>();
+builder.Services.AddScoped<IFlightPassengerService, FlightPassengerService>();
 
 var app = builder.Build();
 

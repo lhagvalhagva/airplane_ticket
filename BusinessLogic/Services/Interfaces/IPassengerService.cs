@@ -12,8 +12,10 @@ namespace BusinessLogic.Services
         /// <summary>
         /// Бүх зорчигчдын жагсаалтыг авах.
         /// </summary>
+        /// <param name="nameFilter">Нэрээр шүүх (заавал биш)</param>
+        /// <param name="passportNumber">Паспортын дугаараар шүүх (заавал биш)</param>
         /// <returns>Зорчигчдын жагсаалт</returns>
-        Task<IEnumerable<Passenger>> GetAllPassengersAsync();
+        Task<IEnumerable<Passenger>> GetAllPassengersAsync(string? nameFilter = null, string? passportNumber = null);
 
         /// <summary>
         /// ID-аар зорчигчийн мэдээлэл авах.
@@ -44,17 +46,19 @@ namespace BusinessLogic.Services
         Task UpdatePassengerAsync(Passenger passenger);
 
         /// <summary>
+        /// Зорчигч устгах.
+        /// </summary>
+        /// <param name="id">Зорчигчийн ID</param>
+        /// <returns>Үйлдлийн үр дүн</returns>
+        Task DeletePassengerAsync(int id);
+
+        /// <summary>
         /// Зорчигч байгаа эсэхийг шалгах.
         /// </summary>
         /// <param name="passengerId">Зорчигчийн ID</param>
         /// <returns>Зорчигч байгаа эсэх</returns>
         Task<bool> PassengerExistsAsync(int passengerId);
 
-        /// <summary>
-        /// Нислэгийн зорчигчдын жагсаалтыг авах.
-        /// </summary>
-        /// <param name="flightId">Нислэгийн ID</param>
-        /// <returns>Нислэгийн зорчигчдын жагсаалт</returns>
-        Task<IEnumerable<Passenger>> GetPassengersByFlightIdAsync(int flightId);
+
     }
 }
