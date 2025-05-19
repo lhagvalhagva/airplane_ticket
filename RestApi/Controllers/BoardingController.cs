@@ -39,18 +39,11 @@ namespace RestApi.Controllers
         /// <returns>Боломжтой суудлуудын жагсаалт</returns>
         /// <response code="200">Боломжтой суудлуудын жагсаалт амжилттай буцаагдсан</response>
         /// <response code="400">Нислэгийн дугаар буруу</response>
-        [HttpGet("flights/{flightId}/seats/available")]
+        [HttpGet("flights/{flightId}/seats")]
         public async Task<ActionResult<IEnumerable<Seat>>> GetAvailableSeats(int flightId)
         {
-            try
-            {
-                var seats = await _boardingService.GetAvailableSeatsAsync(flightId);
-                return Ok(seats);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var seats = await _boardingService.GetAvailableSeatsAsync(flightId);
+            return Ok(seats);
         }
 
         /// <summary>
@@ -87,18 +80,11 @@ namespace RestApi.Controllers
         /// <returns>Нислэгийн бүх онгоцны бүртгэлийн жагсаалт</returns>
         /// <response code="200">Онгоцны бүртгэлийн жагсаалт амжилттай буцаагдсан</response>
         /// <response code="400">Нислэгийн дугаар буруу</response>
-        [HttpGet("flights/{flightId}/boardingpasses")]
-        public async Task<ActionResult<IEnumerable<BoardingPass>>> GetBoardingPassesByFlight(int flightId)
+        [HttpGet("flights/{flightId}/passes")]
+        public async Task<ActionResult<IEnumerable<BoardingPass>>> GetFlightBoardingPasses(int flightId)
         {
-            try
-            {
-                var boardingPasses = await _boardingService.GetBoardingPassesByFlightAsync(flightId);
-                return Ok(boardingPasses);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var boardingPasses = await _boardingService.GetBoardingPassesByFlightAsync(flightId);
+            return Ok(boardingPasses);
         }
 
         /// <summary>
@@ -108,16 +94,12 @@ namespace RestApi.Controllers
         /// <returns>Онгоцны бүртгэлийн мэдээлэл</returns>
         /// <response code="200">Онгоцны бүртгэлийн мэдээлэл амжилттай буцаагдсан</response>
         /// <response code="404">Онгоцны бүртгэл олдсонгүй</response>
-        [HttpGet("boardingpasses/{id}")]
-        public async Task<ActionResult<BoardingPass>> GetBoardingPass(int id)
+        [HttpGet("passes/{boardingPassId}")]
+        public async Task<ActionResult<BoardingPass>> GetBoardingPass(int boardingPassId)
         {
-            var boardingPass = await _boardingService.GetBoardingPassAsync(id);
-
+            var boardingPass = await _boardingService.GetBoardingPassAsync(boardingPassId);
             if (boardingPass == null)
-            {
-                return NotFound($"Boarding pass with ID {id} not found.");
-            }
-
+                return NotFound();
             return Ok(boardingPass);
         }
 
@@ -130,8 +112,8 @@ namespace RestApi.Controllers
         /// <response code="404">Нислэг, зорчигч, эсвэл суудал олдсонгүй</response>
         /// <response code="409">Суудал аль хэдийн захиалагдсан, эсвэл ижил зорчигч өөр нислэгт бүртгэгдсэн</response>
         /// <response code="400">Бусад алдаанууд</response>
-        [HttpPost("checkin")]
-        public async Task<ActionResult<BoardingPass>> CheckInPassenger(CheckInRequest request)
+        [HttpPost("check-in")]
+        public async Task<ActionResult<BoardingPass>> CheckInPassenger([FromBody] CheckInRequest request)
         {
             try
             {

@@ -38,22 +38,33 @@ namespace DataAccess
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<FlightPassenger>()
-                .HasOne(fp => fp.Flight)
-                .WithMany()
-                .HasForeignKey(fp => fp.FlightId)
-                .OnDelete(DeleteBehavior.Restrict);
+            // Flight configuration
+            modelBuilder.Entity<Flight>()
+                .HasMany(f => f.Seats)
+                .WithOne(s => s.Flight)
+                .HasForeignKey(s => s.FlightId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<FlightPassenger>()
-                .HasOne(fp => fp.Passenger)
-                .WithMany()
-                .HasForeignKey(fp => fp.PassengerId)
-                .OnDelete(DeleteBehavior.Restrict);
-            
+            // Passenger configuration
+            modelBuilder.Entity<Passenger>()
+                .HasMany(p => p.BoardingPasses)
+                .WithOne(bp => bp.Passenger)
+                .HasForeignKey(bp => bp.PassengerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Seat configuration
             modelBuilder.Entity<Seat>()
                 .HasOne(s => s.BoardingPass)
                 .WithOne(bp => bp.Seat)
-                .HasForeignKey<BoardingPass>(bp => bp.SeatId);
+                .HasForeignKey<BoardingPass>(bp => bp.SeatId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // BoardingPass configuration
+            modelBuilder.Entity<BoardingPass>()
+                .HasOne(bp => bp.Flight)
+                .WithMany()
+                .HasForeignKey(bp => bp.FlightId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 } 

@@ -29,8 +29,8 @@ namespace DataAccess.Models
         public FlightStatus Status { get; set; } = FlightStatus.CheckingIn;
         
         // Navigation properties
+        public virtual ICollection<FlightPassenger> FlightPassengers { get; set; }
         public virtual ICollection<Seat> Seats { get; set; } = new List<Seat>();
-        public virtual ICollection<Passenger> Passengers { get; set; } = new List<Passenger>();
     }
 
     public enum FlightStatus

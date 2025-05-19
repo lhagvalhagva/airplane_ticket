@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\User\\Desktop\\WINDOWS_PROJECT\\BlazorClient\\BlazorClient.csproj": {}
+    "C:\\Users\\Dell\\Desktop\\lesson\\Junior\\windows\\airplane_ticket\\BlazorClient\\BlazorClient.csproj": {}
   },
   "projects": {
-    "C:\\Users\\User\\Desktop\\WINDOWS_PROJECT\\BlazorClient\\BlazorClient.csproj": {
+    "C:\\Users\\Dell\\Desktop\\lesson\\Junior\\windows\\airplane_ticket\\BlazorClient\\BlazorClient.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\User\\Desktop\\WINDOWS_PROJECT\\BlazorClient\\BlazorClient.csproj",
+        "projectUniqueName": "C:\\Users\\Dell\\Desktop\\lesson\\Junior\\windows\\airplane_ticket\\BlazorClient\\BlazorClient.csproj",
         "projectName": "BlazorClient",
-        "projectPath": "C:\\Users\\User\\Desktop\\WINDOWS_PROJECT\\BlazorClient\\BlazorClient.csproj",
-        "packagesPath": "C:\\Users\\User\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\User\\Desktop\\WINDOWS_PROJECT\\BlazorClient\\obj\\",
+        "projectPath": "C:\\Users\\Dell\\Desktop\\lesson\\Junior\\windows\\airplane_ticket\\BlazorClient\\BlazorClient.csproj",
+        "packagesPath": "C:\\Users\\Dell\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Dell\\Desktop\\lesson\\Junior\\windows\\airplane_ticket\\BlazorClient\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\User\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Dell\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -26,7 +26,6 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {

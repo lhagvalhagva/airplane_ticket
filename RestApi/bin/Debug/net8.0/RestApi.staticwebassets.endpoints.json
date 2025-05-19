@@ -1,5 +1,88 @@
 {
   "Version": 1,
   "ManifestType": "Build",
-  "Endpoints": []
+  "Endpoints": [
+    {
+      "Route": "signalr-test.cx768unmyp.html",
+      "AssetFile": "signalr-test.html",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "4136"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/html"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"YGKVYPP0g1CvPg1U0E3S6NzAYKcJgkyXrhij70w+jPU=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 19 May 2025 07:22:29 GMT"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "cx768unmyp"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-YGKVYPP0g1CvPg1U0E3S6NzAYKcJgkyXrhij70w+jPU="
+        },
+        {
+          "Name": "label",
+          "Value": "signalr-test.html"
+        }
+      ]
+    },
+    {
+      "Route": "signalr-test.html",
+      "AssetFile": "signalr-test.html",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "4136"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/html"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"YGKVYPP0g1CvPg1U0E3S6NzAYKcJgkyXrhij70w+jPU=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Mon, 19 May 2025 07:22:29 GMT"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-YGKVYPP0g1CvPg1U0E3S6NzAYKcJgkyXrhij70w+jPU="
+        }
+      ]
+    }
+  ]
 }

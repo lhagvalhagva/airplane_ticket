@@ -1,38 +1,43 @@
-using BusinessLogic;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
+using DataAccess;
+using DataAccess.Repositories;
+using BusinessLogic.Services;
+using SignalRHubLibrary;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Add BusinessLogic services
-string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddBusinessLogic(connectionString);
-
-// Initialize database if it doesn't exist
-await BusinessLogic.DependencyInjection.InitializeDatabaseAsync();
-
-// Add CORS
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
-    });
-});
-
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
-        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-    });
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Configure CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        builder =>
+        {
+            builder.AllowAnyOrigin()
+                   .AllowAnyMethod()
+                   .AllowAnyHeader();
+        });
+});
+
+// Configure SignalR
+builder.Services.AddSignalR();
+
+// Configure DbContext
+builder.Services.AddDbContext<AirportDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Register repositories
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+
+// Register services
+builder.Services.AddScoped<IFlightService, FlightService>();
+builder.Services.AddScoped<IBoardingService, BoardingService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IPassengerService, PassengerService>();
 
 var app = builder.Build();
 
@@ -44,12 +49,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-// Use CORS
 app.UseCors("AllowAll");
-
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<FlightHub>("/flightHub");
 
 app.Run();

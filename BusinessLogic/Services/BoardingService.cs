@@ -9,24 +9,27 @@ namespace BusinessLogic.Services
 {
     public class BoardingService : IBoardingService
     {
-        private readonly IRepository<BoardingPass> _boardingPassRepository;
-        private readonly IRepository<Flight> _flightRepository;
         private readonly IRepository<Passenger> _passengerRepository;
+        private readonly IRepository<Flight> _flightRepository;
         private readonly IRepository<Seat> _seatRepository;
+        private readonly IRepository<BoardingPass> _boardingPassRepository;
         private readonly IRepository<FlightPassenger> _flightPassengerRepository;
+        private readonly INotificationService _notificationService;
 
         public BoardingService(
-            IRepository<BoardingPass> boardingPassRepository,
-            IRepository<Flight> flightRepository,
             IRepository<Passenger> passengerRepository,
+            IRepository<Flight> flightRepository,
             IRepository<Seat> seatRepository,
-            IRepository<FlightPassenger> flightPassengerRepository)
+            IRepository<BoardingPass> boardingPassRepository,
+            IRepository<FlightPassenger> flightPassengerRepository,
+            INotificationService notificationService)
         {
-            _boardingPassRepository = boardingPassRepository;
-            _flightRepository = flightRepository;
             _passengerRepository = passengerRepository;
+            _flightRepository = flightRepository;
             _seatRepository = seatRepository;
+            _boardingPassRepository = boardingPassRepository;
             _flightPassengerRepository = flightPassengerRepository;
+            _notificationService = notificationService;
         }
         // C:\Users\User\Desktop\WINDOWS_PROJECT\RestApi\airport.db
         public async Task<BoardingPass> CheckInPassengerAsync(int flightId, string passportNumber, string seatNumber)
@@ -56,8 +59,10 @@ namespace BusinessLogic.Services
             if (seat.IsOccupied)
                 throw new InvalidOperationException($"{seatNumber} суудал аль хэдийн захиалагдсан байна.");
 
-            seat.IsOccupied = true;
-            await _seatRepository.UpdateAsync(seat);
+            // Try to assign the seat with retry mechanism
+            bool seatAssigned = await AssignSeatToPassengerAsync(flightId, passenger.Id, seatNumber);
+            if (!seatAssigned)
+                throw new InvalidOperationException($"{seatNumber} суудал өөр зорчигчид хуваарилагдсан байна.");
 
             var boardingPass = new BoardingPass
             {
@@ -69,6 +74,9 @@ namespace BusinessLogic.Services
 
             await _boardingPassRepository.AddAsync(boardingPass);
             await _boardingPassRepository.SaveChangesAsync();
+
+            // Notify about the boarding pass
+            await _notificationService.NotifyBoardingPassIssuedAsync(boardingPass);
 
             return boardingPass;
         }
@@ -105,70 +113,52 @@ namespace BusinessLogic.Services
         /// </summary>
         public async Task<bool> AssignSeatToPassengerAsync(int flightId, int passengerId, string seatNumber)
         {
-            // Retry logic for handling potential database locking
-            int maxRetries = 3;
-            int retryDelay = 500; // milliseconds
-            
-            // Нислэг байгаа эсэхийг шалгах
-            var flight = await _flightRepository.GetByIdAsync(flightId);
-            if (flight == null)
-                throw new KeyNotFoundException($"{flightId} дугаартай нислэг олдсонгүй.");
-                
-            // Зорчигч байгаа эсэхийг шалгах
-            var passenger = await _passengerRepository.GetByIdAsync(passengerId);
-            if (passenger == null)
-                throw new KeyNotFoundException($"{passengerId} дугаартай зорчигч олдсонгүй.");
-            
+            const int maxRetries = 3;
+            int retryDelay = 100; // Initial delay in milliseconds
+
             for (int attempt = 0; attempt < maxRetries; attempt++)
             {
                 try
                 {
-                    // Нислэгийн зорчигчдод шалгах
-                    var flightPassengers = await _flightPassengerRepository.FindAsync(fp => fp.FlightId == flightId && fp.PassengerId == passengerId);
+                    var flightPassengers = await _flightPassengerRepository.FindAsync(fp => 
+                        fp.FlightId == flightId && fp.PassengerId == passengerId);
                     
                     if (!flightPassengers.Any())
                         throw new InvalidOperationException($"{passengerId} дугаартай зорчигч {flightId} дугаартай нислэгт бүртгэлгүй байна.");
                         
-                    // Суудал байгаа эсэхийг шалгах
-                    var seats = await _seatRepository.FindAsync(s => s.FlightId == flightId && s.SeatNumber == seatNumber);
+                    var seats = await _seatRepository.FindAsync(s => 
+                        s.FlightId == flightId && s.SeatNumber == seatNumber);
                     var seat = seats.FirstOrDefault();
                     
                     if (seat == null)
                         throw new KeyNotFoundException($"{flightId} дугаартай нислэгт {seatNumber} суудал олдсонгүй.");
                         
-                    // Суудал сул эсэхийг шалгах
                     if (seat.IsOccupied)
                         throw new InvalidOperationException($"{seatNumber} суудал аль хэдийн эзэмшигдсэн байна.");
                     
-                    // Суудлыг эзэмшүүлэх
                     seat.IsOccupied = true;
                     await _seatRepository.UpdateAsync(seat);
-                    
-                    // Өөрчлөлтүүдийг хадгалж, транзакцийг хаах - immediately execute SaveChanges
                     await _seatRepository.SaveChangesAsync();
                     
-                    // If successful, exit the retry loop
+                    // Notify about seat assignment
+                    await _notificationService.NotifySeatAssignedAsync(flightId, seatNumber, passengerId);
+                    
                     return true;
                 }
-                catch (Microsoft.EntityFrameworkCore.DbUpdateException ex) when (ex.InnerException is Microsoft.Data.Sqlite.SqliteException sqlEx && sqlEx.Message.Contains("database is locked"))
+                catch (Exception ex) when (ex.InnerException?.Message.Contains("database is locked") == true)
                 {
-                    // Only retry if this is specifically a database lock exception
                     if (attempt < maxRetries - 1)
                     {
-                        Console.WriteLine($"Database locked, attempt {attempt + 1} of {maxRetries}. Waiting {retryDelay}ms before retry.");
                         await Task.Delay(retryDelay);
-                        // Increase retry delay for next attempt (exponential backoff)
                         retryDelay *= 2;
                     }
                     else
                     {
-                        // This was the last attempt, rethrow the exception
                         throw;
                     }
                 }
             }
             
-            // If we've exhausted all retries without success or exceptions
             return false;
         }
     }

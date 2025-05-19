@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SignalR Flight Notifications</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .notification {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            background-color: #f0f0f0;
+        }
+        .flight-status {
+            background-color: #e3f2fd;
+        }
+        .seat-assigned {
+            background-color: #e8f5e9;
+        }
+        .boarding-pass {
+            background-color: #fff3e0;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            padding: 5px;
+            margin-right: 10px;
+        }
+        button {
+            padding: 5px 10px;
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Flight Notifications</h1>
+        
+        <div class="controls">
+            <input type="text" id="flightNumber" placeholder="Enter flight number">
+            <button onclick="joinFlight()">Join Flight</button>
+            <button onclick="leaveFlight()">Leave Flight</button>
+        </div>
+
+        <div id="notifications"></div>
+    </div>
+
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/flightHub")
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on("FlightStatusUpdated", (flightNumber, status) => {
+            addNotification(`Flight ${flightNumber} status updated to: ${status}`, "flight-status");
+        });
+
+        connection.on("SeatAssigned", (flightNumber, seatNumber, passengerName) => {
+            addNotification(`Seat ${seatNumber} assigned to ${passengerName} on flight ${flightNumber}`, "seat-assigned");
+        });
+
+        connection.on("BoardingPassIssued", (flightNumber, passengerName) => {
+            addNotification(`Boarding pass issued to ${passengerName} for flight ${flightNumber}`, "boarding-pass");
+        });
+
+        function addNotification(message, type) {
+            const notificationsDiv = document.getElementById("notifications");
+            const notification = document.createElement("div");
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            notificationsDiv.insertBefore(notification, notificationsDiv.firstChild);
+        }
+
+        async function joinFlight() {
+            const flightNumber = document.getElementById("flightNumber").value;
+            if (flightNumber) {
+                try {
+                    await connection.invoke("JoinFlightGroup", flightNumber);
+                    addNotification(`Joined flight ${flightNumber}`, "flight-status");
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+        }
+
+        async function leaveFlight() {
+            const flightNumber = document.getElementById("flightNumber").value;
+            if (flightNumber) {
+                try {
+                    await connection.invoke("LeaveFlightGroup", flightNumber);
+                    addNotification(`Left flight ${flightNumber}`, "flight-status");
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+        }
+
+        // Start the connection
+        connection.start()
+            .then(() => {
+                console.log("SignalR Connected.");
+                addNotification("Connected to SignalR hub", "flight-status");
+            })
+            .catch(err => console.error(err));
+    </script>
+</body>
+</html> 

@@ -10,3 +10,16 @@ C:\Users\User\Desktop\WINDOWS_PROJECT\SignalRHubLibrary\obj\Debug\net8.0\refint\
 C:\Users\User\Desktop\WINDOWS_PROJECT\SignalRHubLibrary\obj\Debug\net8.0\SignalRHubLibrary.pdb
 C:\Users\User\Desktop\WINDOWS_PROJECT\SignalRHubLibrary\obj\Debug\net8.0\ref\SignalRHubLibrary.dll
 C:\Users\User\Desktop\WINDOWS_PROJECT\SignalRHubLibrary\obj\Debug\net8.0\SignalRHubLibrary.sourcelink.json
+C:\Users\Dell\Desktop\lesson\Junior\windows\airplane_ticket\SignalRHubLibrary\bin\Debug\net8.0\SignalRHubLibrary.deps.json
+C:\Users\Dell\Desktop\lesson\Junior\windows\airplane_ticket\SignalRHubLibrary\bin\Debug\net8.0\SignalRHubLibrary.dll
+C:\Users\Dell\Desktop\lesson\Junior\windows\airplane_ticket\SignalRHubLibrary\bin\Debug\net8.0\SignalRHubLibrary.pdb
+C:\Users\Dell\Desktop\lesson\Junior\windows\airplane_ticket\SignalRHubLibrary\obj\Debug\net8.0\SignalRHubLibrary.csproj.AssemblyReference.cache
+C:\Users\Dell\Desktop\lesson\Junior\windows\airplane_ticket\SignalRHubLibrary\obj\Debug\net8.0\SignalRHubLibrary.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Dell\Desktop\lesson\Junior\windows\airplane_ticket\SignalRHubLibrary\obj\Debug\net8.0\SignalRHubLibrary.AssemblyInfoInputs.cache
+C:\Users\Dell\Desktop\lesson\Junior\windows\airplane_ticket\SignalRHubLibrary\obj\Debug\net8.0\SignalRHubLibrary.AssemblyInfo.cs
+C:\Users\Dell\Desktop\lesson\Junior\windows\airplane_ticket\SignalRHubLibrary\obj\Debug\net8.0\SignalRHubLibrary.csproj.CoreCompileInputs.cache
+C:\Users\Dell\Desktop\lesson\Junior\windows\airplane_ticket\SignalRHubLibrary\obj\Debug\net8.0\SignalRHubLibrary.sourcelink.json
+C:\Users\Dell\Desktop\lesson\Junior\windows\airplane_ticket\SignalRHubLibrary\obj\Debug\net8.0\SignalRHubLibrary.dll
+C:\Users\Dell\Desktop\lesson\Junior\windows\airplane_ticket\SignalRHubLibrary\obj\Debug\net8.0\refint\SignalRHubLibrary.dll
+C:\Users\Dell\Desktop\lesson\Junior\windows\airplane_ticket\SignalRHubLibrary\obj\Debug\net8.0\SignalRHubLibrary.pdb
+C:\Users\Dell\Desktop\lesson\Junior\windows\airplane_ticket\SignalRHubLibrary\obj\Debug\net8.0\ref\SignalRHubLibrary.dll
