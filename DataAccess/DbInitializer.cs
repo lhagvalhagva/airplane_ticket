@@ -146,39 +146,19 @@ namespace DataAccess
 
             if (seat1A != null && seat2B != null && seat3C != null)
             {
+                // Суудлуудыг зорчигчтой холбох
                 seat1A.IsOccupied = true;
+                seat1A.PassengerId = passengers[0].Id;
+                seat1A.CheckInTime = DateTime.Now.AddHours(-1);
+                
                 seat2B.IsOccupied = true;
+                seat2B.PassengerId = passengers[1].Id;
+                seat2B.CheckInTime = DateTime.Now.AddMinutes(-30);
+
                 seat3C.IsOccupied = true;
+                seat3C.PassengerId = passengers[2].Id;
+                seat3C.CheckInTime = DateTime.Now.AddMinutes(-45);
 
-                await context.SaveChangesAsync();
-
-                // Тасалбарууд үүсгэх
-                var boardingPasses = new List<BoardingPass>
-                {
-                    new BoardingPass
-                    {
-                        FlightId = flights[0].Id,
-                        PassengerId = passengers[0].Id,
-                        SeatId = seat1A.Id,
-                        CheckInTime = DateTime.Now.AddHours(-1)
-                    },
-                    new BoardingPass
-                    {
-                        FlightId = flights[0].Id,
-                        PassengerId = passengers[1].Id,
-                        SeatId = seat2B.Id,
-                        CheckInTime = DateTime.Now.AddMinutes(-30)
-                    },
-                    new BoardingPass
-                    {
-                        FlightId = flights[1].Id,
-                        PassengerId = passengers[2].Id,
-                        SeatId = seat3C.Id,
-                        CheckInTime = DateTime.Now.AddMinutes(-45)
-                    }
-                };
-
-                await context.BoardingPasses.AddRangeAsync(boardingPasses);
                 await context.SaveChangesAsync();
             }
         }

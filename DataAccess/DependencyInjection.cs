@@ -25,7 +25,6 @@ namespace DataAccess
             services.AddScoped<IRepository<Flight>, Repository<Flight>>();
             services.AddScoped<IRepository<Passenger>, Repository<Passenger>>();
             services.AddScoped<IRepository<Seat>, Repository<Seat>>();
-            services.AddScoped<IRepository<BoardingPass>, Repository<BoardingPass>>();
             services.AddScoped<IRepository<FlightPassenger>, Repository<FlightPassenger>>();
             
             return services;

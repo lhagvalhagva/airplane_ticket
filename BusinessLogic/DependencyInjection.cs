@@ -43,7 +43,6 @@ namespace BusinessLogic
             // Services
             services.AddScoped<IFlightService, FlightService>();
             services.AddScoped<IPassengerService, PassengerService>();
-            services.AddScoped<IBoardingService, BoardingService>();
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<ISeatService, SeatService>();
             services.AddScoped<IFlightPassengerService, FlightPassengerService>();

@@ -20,7 +20,6 @@ namespace DataAccess
         public DbSet<Flight> Flights { get; set; }
         public DbSet<Passenger> Passengers { get; set; }
         public DbSet<Seat> Seats { get; set; }
-        public DbSet<BoardingPass> BoardingPasses { get; set; }
         public DbSet<FlightPassenger> FlightPassengers { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -47,24 +46,17 @@ namespace DataAccess
 
             // Passenger configuration
             modelBuilder.Entity<Passenger>()
-                .HasMany(p => p.BoardingPasses)
-                .WithOne(bp => bp.Passenger)
-                .HasForeignKey(bp => bp.PassengerId)
+                .HasMany(p => p.FlightPassengers)
+                .WithOne(fp => fp.Passenger)
+                .HasForeignKey(fp => fp.PassengerId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Seat configuration
             modelBuilder.Entity<Seat>()
-                .HasOne(s => s.BoardingPass)
-                .WithOne(bp => bp.Seat)
-                .HasForeignKey<BoardingPass>(bp => bp.SeatId)
-                .OnDelete(DeleteBehavior.SetNull);
-
-            // BoardingPass configuration
-            modelBuilder.Entity<BoardingPass>()
-                .HasOne(bp => bp.Flight)
+                .HasOne(s => s.Passenger)
                 .WithMany()
-                .HasForeignKey(bp => bp.FlightId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasForeignKey(s => s.PassengerId)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 } 

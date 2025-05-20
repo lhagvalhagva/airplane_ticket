@@ -16,12 +16,17 @@ namespace DataAccess.Models
         [Required]
         public bool IsOccupied { get; set; } = false;
         
+        public int? PassengerId { get; set; }
+        
+        public DateTime? CheckInTime { get; set; }
+        
         [Required]
         public int FlightId { get; set; }
         
         [ForeignKey("FlightId")]
         public virtual Flight Flight { get; set; } = null!;
         
-        public virtual BoardingPass? BoardingPass { get; set; }
+        [ForeignKey("PassengerId")]
+        public virtual Passenger? Passenger { get; set; }
     }
-} 
+}

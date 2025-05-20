@@ -1,0 +1,171 @@
+﻿@page "/calculator"
+@using CalculatorLibrary
+
+<PageTitle>Calculator</PageTitle>
+
+<h1>Calculator</h1>
+
+<div class="calculator-container">
+    <div class="calculator-display">
+        <input type="text" class="form-control" readonly value="@displayValue" />
+    </div>
+    
+    <div class="calculator-memory mb-2">
+        <button class="btn btn-secondary" @onclick="MemoryClear">MC</button>
+        <button class="btn btn-secondary" @onclick="MemoryRecall">MR</button>
+        <button class="btn btn-secondary" @onclick="@(() => MemorySave())">MS</button>
+    </div>
+    
+    <div class="calculator-buttons">
+        <div class="calculator-row">
+            <button class="btn btn-light" @onclick="@(() => AppendDigit('7'))">7</button>
+            <button class="btn btn-light" @onclick="@(() => AppendDigit('8'))">8</button>
+            <button class="btn btn-light" @onclick="@(() => AppendDigit('9'))">9</button>
+            <button class="btn btn-info" @onclick="@(() => SetOperation('/'))">/</button>
+        </div>
+        <div class="calculator-row">
+            <button class="btn btn-light" @onclick="@(() => AppendDigit('4'))">4</button>
+            <button class="btn btn-light" @onclick="@(() => AppendDigit('5'))">5</button>
+            <button class="btn btn-light" @onclick="@(() => AppendDigit('6'))">6</button>
+            <button class="btn btn-info" @onclick="@(() => SetOperation('*'))">×</button>
+        </div>
+        <div class="calculator-row">
+            <button class="btn btn-light" @onclick="@(() => AppendDigit('1'))">1</button>
+            <button class="btn btn-light" @onclick="@(() => AppendDigit('2'))">2</button>
+            <button class="btn btn-light" @onclick="@(() => AppendDigit('3'))">3</button>
+            <button class="btn btn-info" @onclick="@(() => SetOperation('-'))">-</button>
+        </div>
+        <div class="calculator-row">
+            <button class="btn btn-light" @onclick="@(() => AppendDigit('0'))">0</button>
+            <button class="btn btn-light" @onclick="@(() => AppendDecimalPoint())">.</button>
+            <button class="btn btn-success" @onclick="Calculate">=</button>
+            <button class="btn btn-info" @onclick="@(() => SetOperation('+'))">+</button>
+        </div>
+        <div class="calculator-row">
+            <button class="btn btn-danger" @onclick="Clear">C</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .calculator-container {
+        max-width: 300px;
+        margin: 20px auto;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #f5f5f5;
+    }
+    
+    .calculator-display {
+        margin-bottom: 10px;
+    }
+    
+    .calculator-row {
+        display: flex;
+        margin-bottom: 5px;
+    }
+    
+    .calculator-row button {
+        flex: 1;
+        margin: 0 2px;
+        height: 50px;
+    }
+    
+    .calculator-memory {
+        display: flex;
+    }
+    
+    .calculator-memory button {
+        flex: 1;
+        margin: 0 2px;
+    }
+</style>
+
+@code {
+    private ExtendedCalculator calculator = new();
+    private string displayValue = "0";
+    private double firstNumber = 0;
+    private double? secondNumber = null;
+    private char? operation = null;
+    private bool isNewCalculation = true;
+    
+    private void AppendDigit(char digit)
+    {
+        if (isNewCalculation)
+        {
+            displayValue = digit.ToString();
+            isNewCalculation = false;
+        }
+        else if (displayValue == "0")
+        {
+            displayValue = digit.ToString();
+        }
+        else
+        {
+            displayValue += digit;
+        }
+    }
+    
+    private void AppendDecimalPoint()
+    {
+        if (isNewCalculation)
+        {
+            displayValue = "0.";
+            isNewCalculation = false;
+        }
+        else if (!displayValue.Contains('.'))
+        {
+            displayValue += '.';
+        }
+    }
+    
+    private void SetOperation(char op)
+    {
+        if (double.TryParse(displayValue, out double currentValue))
+        {
+            firstNumber = currentValue;
+            operation = op;
+            isNewCalculation = true;
+        }
+    }
+    
+    private void Calculate()
+    {
+        if (operation != null && double.TryParse(displayValue, out double currentValue))
+        {
+            secondNumber = currentValue;
+            string result = calculator.Calculate(firstNumber, secondNumber.Value, operation.Value);
+            displayValue = result;
+            isNewCalculation = true;
+        }
+    }
+    
+    private void Clear()
+    {
+        displayValue = "0";
+        firstNumber = 0;
+        secondNumber = null;
+        operation = null;
+        isNewCalculation = true;
+    }
+    
+    private void MemorySave()
+    {
+        if (double.TryParse(displayValue, out double value))
+        {
+            calculator.MemorySave(value);
+        }
+    }
+    
+    private void MemoryRecall()
+    {
+        displayValue = calculator.MemoryRecall().ToString();
+        isNewCalculation = true;
+    }
+    
+    private void MemoryClear()
+    {
+        calculator.MemoryClear();
+    }
+}

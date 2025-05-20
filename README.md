@@ -24,34 +24,30 @@ curl -X GET http://localhost:5027/api/flights
 curl -X GET http://localhost:5027/api/passengers
 ```
 
-### Суудлаас Тасалбар үүсгэх (Boarding Pass)
-
-#### 1. Суудлын дугаараар тасалбар үүсгэх (SeatNumber)
+### Нислэгийн суудлуудыг харах
 
 ```bash
-curl -X POST http://localhost:5027/api/boardingpasses \
+curl -X GET "http://localhost:5027/api/flights/1/seats"
+```
+
+### Сул суудлуудыг харах
+
+```bash
+curl -X GET "http://localhost:5027/api/flights/1/seats/available"
+```
+
+### Суудал оноох/захиалах
+
+```bash
+curl -X POST "http://localhost:5027/api/flights/1/seats/assign" \
   -H "Content-Type: application/json" \
-  -d '{"FlightId": 1, "PassengerId": 1, "SeatNumber": "1A"}'
+  -d '{"PassengerId": 1, "SeatId": 5}'
 ```
 
-#### 2. Суудлын ID-аар тасалбар үүсгэх (SeatId)
+### Суудлыг чөлөөлөх
 
 ```bash
-curl -X POST http://localhost:5027/api/boardingpasses \
-  -H "Content-Type: application/json" \
-  -d '{"FlightId": 1, "PassengerId": 2, "SeatId": 10}'
-```
-
-### Тасалбарыг ID-аар харах
-
-```bash
-curl -X GET http://localhost:5027/api/boardingpasses/1
-```
-
-### Тодорхой нислэгийн бүх тасалбарыг харах
-
-```bash
-curl -X GET "http://localhost:5027/api/boardingpasses?flightId=1"
+curl -X PUT "http://localhost:5027/api/flights/1/seats/10/release"
 ```
 
 ### Зорчигчийг нислэгт бүртгэх

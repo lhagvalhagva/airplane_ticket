@@ -17,12 +17,14 @@ namespace BusinessLogic.Services
         Task NotifyFlightStatusChangedAsync(int flightId, FlightStatus newStatus);
 
         /// <summary>
-        /// Онгоцны бүртгэл үүсгэсэн тухай мэдэгдэл илгээх.
+        /// Суудал оноогдсон тухай мэдэгдэл илгээх.
         /// </summary>
-        /// <param name="boardingPass">Онгоцны бүртгэлийн мэдээлэл</param>
+        /// <param name="flightId">Нислэгийн ID</param>
+        /// <param name="seatNumber">Суудлын дугаар</param>
+        /// <param name="passengerId">Зорчигчийн ID</param>
         /// <returns>Үйлдлийн үр дүн</returns>
-        Task NotifyBoardingPassIssuedAsync(BoardingPass boardingPass);
-
+        Task NotifySeatAssignedAsync(int flightId, string seatNumber, int passengerId);
+        
         /// <summary>
         /// Зорчигч нислэгт бүртгэгдсэн тухай мэдэгдэл илгээх.
         /// </summary>

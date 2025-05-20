@@ -32,6 +32,5 @@ namespace DataAccess.Models
         public bool CheckedIn { get; set; }
 
         public virtual ICollection<FlightPassenger> FlightPassengers { get; set; } = new List<FlightPassenger>();
-        public virtual ICollection<BoardingPass> BoardingPasses { get; set; } = new List<BoardingPass>();
     }
 } 
