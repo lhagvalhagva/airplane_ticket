@@ -61,7 +61,6 @@ namespace BusinessLogic.Services
             await _flightRepository.UpdateAsync(flight);
             await _flightRepository.SaveChangesAsync();
             
-            // Мэдэгдэл илгээх бизнес логик - control layer биш business logic дотор
             await _notificationService.NotifyFlightStatusChangedAsync(flightId, status);
         }
 
