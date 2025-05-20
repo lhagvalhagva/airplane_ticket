@@ -103,7 +103,7 @@ namespace BusinessLogic.Services
             await _flightPassengerRepository.SaveChangesAsync();
 
             // Нислэгийн зорчигчид мэдэгдэл илгээх
-            await _notificationService.NotifyPassengerRegisteredAsync(flightId, passengerId);
+            // await _notificationService.NotifyPassengerRegisteredAsync(flightId, passengerId);
 
             return flightPassenger;
         }
@@ -117,12 +117,12 @@ namespace BusinessLogic.Services
 
             // Холболт устгах
             await _flightPassengerRepository.DeleteAsync(flightPassenger);
-
-            // Нислэгийн зорчигчид мэдэгдэл илгээх
-            await _notificationService.NotifyPassengerUnregisteredAsync(
-                flightPassenger.FlightId, 
-                flightPassenger.PassengerId);
         }
+            // Нислэгийн зорчигчид мэдэгдэл илгээх
+        //     await _notificationService.NotifyPassengerUnregisteredAsync(
+        //         flightPassenger.FlightId, 
+        //         flightPassenger.PassengerId);
+        // }
 
         public async Task RemovePassengerFromFlightAsync(int flightId, int passengerId)
         {
@@ -138,7 +138,7 @@ namespace BusinessLogic.Services
             await _flightPassengerRepository.DeleteAsync(flightPassenger);
 
             // Нислэгийн зорчигчид мэдэгдэл илгээх
-            await _notificationService.NotifyPassengerUnregisteredAsync(flightId, passengerId);
+            // await _notificationService.NotifyPassengerUnregisteredAsync(flightId, passengerId);
         }
 
         public async Task<bool> FlightPassengerExistsAsync(int id)

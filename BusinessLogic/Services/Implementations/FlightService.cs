@@ -65,9 +65,16 @@ namespace BusinessLogic.Services
             var existingFlight = await _flightRepository.GetByIdAsync(flight.Id);
             if (existingFlight == null)
                 throw new KeyNotFoundException($"Flight with ID {flight.Id} not found.");
-
+                
+            var statusChanged = existingFlight.Status != flight.Status;
+            
             await _flightRepository.UpdateAsync(flight);
             await _flightRepository.SaveChangesAsync();
+            
+            if (statusChanged)
+            {
+                await _notificationService.NotifyFlightStatusChangedAsync(flight.Id, flight.Status);
+            }
         }
 
         public async Task DeleteFlightAsync(int id)
