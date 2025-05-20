@@ -129,8 +129,10 @@ namespace RestApi.Controllers
                 var seat = await _seatService.GetPassengerSeatAsync(flightId, passengerId);
                 if (seat == null)
                 {
+                    // Зорчигч бүртгэлтэй боловч суудал оноогоогүй байгаа шүү
                     return Ok(new { hasAssignedSeat = false, message = $"Зорчигч ID {passengerId} нь суудал аваагүй байна." });
                 }
+                
                 var seatDto = new
                 {
                     id = seat.Id,

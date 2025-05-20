@@ -1,4 +1,5 @@
 using DataAccess.Models;
+using SocketServerLibrary;
 using System;
 using System.Threading.Tasks;
 
@@ -6,8 +7,12 @@ namespace BusinessLogic.Services
 {
     public class NotificationService : INotificationService
     {
+        private readonly WebSocketServer _socketServer;
+        private bool _serverStarted = false;
+        
         public NotificationService()
         {
+            _socketServer = new WebSocketServer();
         }
 
         public async Task NotifyFlightStatusChangedAsync(int flightId, FlightStatus newStatus)
