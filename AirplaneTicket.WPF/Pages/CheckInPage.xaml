@@ -1,0 +1,54 @@
+<Page x:Class="AirplaneTicket.WPF.Pages.CheckInPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="CheckInPage">
+    <Grid Margin="20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300"/>
+            <ColumnDefinition Width="20"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <!-- Toast Notification -->
+        <Border x:Name="ToastNotification" Background="#323232" CornerRadius="8" Padding="16,8" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,20,0,0" Visibility="Collapsed" Opacity="0.95" Panel.ZIndex="10">
+            <TextBlock x:Name="ToastText" Foreground="White" FontSize="16"/>
+        </Border>
+        <!-- Loading Overlay -->
+        <Grid x:Name="LoadingOverlay" Background="#80000000" Visibility="Collapsed" Panel.ZIndex="20">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar Width="80" Height="80" IsIndeterminate="True"/>
+                <TextBlock Text="Loading..." Foreground="White" FontSize="18" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Grid>
+        <!-- Left Panel: Passenger & Flight Controls -->
+        <StackPanel Grid.Column="0" VerticalAlignment="Top">
+            <TextBlock Text="Select Flight" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+            <ComboBox x:Name="FlightComboBox" Height="32" FontSize="15" Margin="0,0,0,16"/>
+            <TextBlock Text="Passenger Check-in" FontSize="22" FontWeight="Bold" Margin="0,0,0,16"/>
+            <TextBlock Text="Passport Number"/>
+            <TextBox x:Name="PassportTextBox" Height="32" FontSize="16" Margin="0,0,0,8"/>
+            <Button x:Name="SearchButton" Content="Search" Height="32" FontSize="16" Background="#0078D7" Foreground="White" Margin="0,0,0,8"/>
+            <Border Background="#fff" CornerRadius="8" Padding="12" Margin="0,16,0,0" BorderBrush="#ddd" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="Passenger Info" FontWeight="Bold"/>
+                    <TextBlock x:Name="PassengerInfoText" Text="No passenger selected." FontSize="14" Foreground="#666"/>
+                </StackPanel>
+            </Border>
+            <TextBlock Text="Flight Status" Margin="0,16,0,0"/>
+            <ComboBox x:Name="FlightStatusComboBox" Height="32" FontSize="16" Margin="0,0,0,8">
+                <ComboBoxItem Content="Бүртгэж байна"/>
+                <ComboBoxItem Content="Онгоцонд сууж байна"/>
+                <ComboBoxItem Content="Ниссэн"/>
+                <ComboBoxItem Content="Хойшилсон"/>
+                <ComboBoxItem Content="Цуцалсан"/>
+            </ComboBox>
+            <Button x:Name="PrintBoardingPassButton" Content="Print Boarding Pass" Height="32" FontSize="16" Background="#28a745" Foreground="White" Margin="0,16,0,0"/>
+        </StackPanel>
+        <!-- Right Panel: Seat Map -->
+        <Border Grid.Column="2" Background="#fff" CornerRadius="12" Padding="24" BorderBrush="#ddd" BorderThickness="1">
+            <StackPanel>
+                <TextBlock Text="Seat Map" FontSize="20" FontWeight="Bold" Margin="0,0,0,16"/>
+                <UniformGrid x:Name="SeatMapGrid" Rows="10" Columns="6" HorizontalAlignment="Center" VerticalAlignment="Top"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Page> 

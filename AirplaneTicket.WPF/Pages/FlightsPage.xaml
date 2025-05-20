@@ -1,0 +1,57 @@
+<Page x:Class="AirplaneTicket.WPF.Pages.FlightsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Flights">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Search and Filter Controls -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,20">
+            <TextBox x:Name="txtSearch" Width="200" Margin="0,0,10,0" 
+                     TextChanged="txtSearch_TextChanged">
+                <TextBox.Style>
+                    <Style TargetType="TextBox">
+                        <Style.Resources>
+                            <VisualBrush x:Key="PlaceholderBrush" TileMode="None" Opacity="0.5" Stretch="None" AlignmentX="Left">
+                                <VisualBrush.Visual>
+                                    <TextBlock Text="Search flights..."/>
+                                </VisualBrush.Visual>
+                            </VisualBrush>
+                        </Style.Resources>
+                        <Style.Triggers>
+                            <Trigger Property="Text" Value="">
+                                <Setter Property="Background" Value="{StaticResource PlaceholderBrush}"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBox.Style>
+            </TextBox>
+            <ComboBox x:Name="cmbFilter" Width="150" Margin="0,0,10,0"
+                      SelectionChanged="cmbFilter_SelectionChanged">
+                <ComboBoxItem Content="All Flights"/>
+                <ComboBoxItem Content="Available Only"/>
+                <ComboBoxItem Content="Today's Flights"/>
+            </ComboBox>
+            <Button x:Name="btnRefresh" Content="Refresh" 
+                    Click="btnRefresh_Click" Padding="10,5"/>
+        </StackPanel>
+
+        <!-- Flights DataGrid -->
+        <DataGrid x:Name="dgFlights" Grid.Row="1" AutoGenerateColumns="False" 
+                  IsReadOnly="True" SelectionMode="Single"
+                  SelectionChanged="dgFlights_SelectionChanged">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Flight #" Binding="{Binding FlightNumber}"/>
+                <DataGridTextColumn Header="From" Binding="{Binding DepartureCity}"/>
+                <DataGridTextColumn Header="To" Binding="{Binding ArrivalCity}"/>
+                <DataGridTextColumn Header="Departure" Binding="{Binding DepartureTime, StringFormat=MM/dd/yyyy HH:mm}"/>
+                <DataGridTextColumn Header="Arrival" Binding="{Binding ArrivalTime, StringFormat=MM/dd/yyyy HH:mm}"/>
+                <DataGridTextColumn Header="Available Seats" Binding="{Binding AvailableSeats}"/>
+                <DataGridTextColumn Header="Price" Binding="{Binding Price, StringFormat=C}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</Page> 

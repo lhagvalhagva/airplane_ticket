@@ -1,0 +1,89 @@
+.flight-display {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+.flight-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.flight-header h2 {
+    margin: 0;
+    font-size: 2.5rem;
+    color: #333;
+}
+
+.status {
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.status-check-in {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.status-boarded {
+    background-color: #28a745;
+    color: white;
+}
+
+.status-departed {
+    background-color: #6c757d;
+    color: white;
+}
+
+.status-delayed {
+    background-color: #ffc107;
+    color: black;
+}
+
+.status-cancelled {
+    background-color: #dc3545;
+    color: white;
+}
+
+.flight-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.info-section {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.info-section h3 {
+    margin-top: 0;
+    color: #495057;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 10px;
+}
+
+.info-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.info-section li {
+    padding: 8px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.info-section li:last-child {
+    border-bottom: none;
+} 

@@ -1,0 +1,52 @@
+<Page x:Class="AirplaneTicket.WPF.Pages.BoardingPassesPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Boarding Passes">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Search and Add Controls -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,20">
+            <TextBox x:Name="txtSearch" Width="200" Margin="0,0,10,0" 
+                     TextChanged="txtSearch_TextChanged">
+                <TextBox.Style>
+                    <Style TargetType="TextBox">
+                        <Style.Resources>
+                            <VisualBrush x:Key="PlaceholderBrush" TileMode="None" Opacity="0.5" Stretch="None" AlignmentX="Left">
+                                <VisualBrush.Visual>
+                                    <TextBlock Text="Search boarding passes..."/>
+                                </VisualBrush.Visual>
+                            </VisualBrush>
+                        </Style.Resources>
+                        <Style.Triggers>
+                            <Trigger Property="Text" Value="">
+                                <Setter Property="Background" Value="{StaticResource PlaceholderBrush}"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBox.Style>
+            </TextBox>
+            <Button x:Name="btnAddBoardingPass" Content="Create Boarding Pass" 
+                    Click="btnAddBoardingPass_Click" Padding="10,5" Margin="0,0,10,0"/>
+            <Button x:Name="btnRefresh" Content="Refresh" 
+                    Click="btnRefresh_Click" Padding="10,5"/>
+        </StackPanel>
+
+        <!-- Boarding Passes DataGrid -->
+        <DataGrid x:Name="dgBoardingPasses" Grid.Row="1" AutoGenerateColumns="False" 
+                  IsReadOnly="True" SelectionMode="Single"
+                  SelectionChanged="dgBoardingPasses_SelectionChanged">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Flight #" Binding="{Binding Flight.FlightNumber}"/>
+                <DataGridTextColumn Header="Passenger" Binding="{Binding Passenger.LastName}"/>
+                <DataGridTextColumn Header="Seat" Binding="{Binding SeatNumber}"/>
+                <DataGridTextColumn Header="Boarding Time" Binding="{Binding BoardingTime, StringFormat=MM/dd/yyyy HH:mm}"/>
+                <DataGridTextColumn Header="Gate" Binding="{Binding Gate}"/>
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</Page> 

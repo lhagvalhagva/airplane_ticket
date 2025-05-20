@@ -49,3 +49,49 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+.departures-title {
+    background: #ffd600;
+    color: #222;
+    padding: 10px;
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: left;
+    border-radius: 5px 5px 0 0;
+}
+.departures-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #222;
+    color: #fff;
+}
+.departures-table th, .departures-table td {
+    padding: 12px 16px;
+    text-align: left;
+}
+.departures-table th {
+    background: #ffd600;
+    color: #222;
+    font-size: 1.1rem;
+}
+.status-delayed {
+    color: orange;
+    font-weight: bold;
+}
+.status-cancelled {
+    color: red;
+    font-weight: bold;
+}
+.status-boarding {
+    color: #00e676;
+    font-weight: bold;
+}
+.status-checkin {
+    color: #2196f3;
+    font-weight: bold;
+}
+.status-departed {
+    color: #ffd600;
+    font-weight: bold;
+}

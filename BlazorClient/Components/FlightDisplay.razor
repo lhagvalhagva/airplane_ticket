@@ -1,0 +1,97 @@
+@page "/flight-display/{FlightNumber}"
+@using Microsoft.AspNetCore.SignalR.Client
+@inject HubConnection HubConnection
+@implements IAsyncDisposable
+
+<div class="flight-display">
+    <div class="flight-header">
+        <h2>Flight @FlightNumber</h2>
+        <div class="status @GetStatusClass()">@CurrentStatus</div>
+    </div>
+
+    <div class="flight-info">
+        <div class="info-section">
+            <h3>Boarding Passes Issued</h3>
+            <ul>
+                @foreach (var passenger in BoardingPasses)
+                {
+                    <li>@passenger</li>
+                }
+            </ul>
+        </div>
+
+        <div class="info-section">
+            <h3>Seat Assignments</h3>
+            <ul>
+                @foreach (var assignment in SeatAssignments)
+                {
+                    <li>@assignment</li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string FlightNumber { get; set; } = "";
+
+    private string CurrentStatus { get; set; } = "Check-in";
+    private List<string> BoardingPasses { get; set; } = new();
+    private List<string> SeatAssignments { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await HubConnection.StartAsync();
+        await HubConnection.InvokeAsync("JoinFlightGroup", FlightNumber);
+
+        HubConnection.On<string, string>("FlightStatusUpdated", (flightNumber, status) =>
+        {
+            if (flightNumber == FlightNumber)
+            {
+                CurrentStatus = status;
+                StateHasChanged();
+            }
+        });
+
+        HubConnection.On<string, string>("BoardingPassIssued", (flightNumber, passengerName) =>
+        {
+            if (flightNumber == FlightNumber)
+            {
+                BoardingPasses.Add(passengerName);
+                StateHasChanged();
+            }
+        });
+
+        HubConnection.On<string, string, string>("SeatAssigned", (flightNumber, seatNumber, passengerName) =>
+        {
+            if (flightNumber == FlightNumber)
+            {
+                SeatAssignments.Add($"{passengerName} - Seat {seatNumber}");
+                StateHasChanged();
+            }
+        });
+    }
+
+    private string GetStatusClass()
+    {
+        return CurrentStatus.ToLower() switch
+        {
+            "check-in" => "status-check-in",
+            "boarded" => "status-boarded",
+            "departed" => "status-departed",
+            "delayed" => "status-delayed",
+            "cancelled" => "status-cancelled",
+            _ => ""
+        };
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (HubConnection is not null)
+        {
+            await HubConnection.InvokeAsync("LeaveFlightGroup", FlightNumber);
+            await HubConnection.DisposeAsync();
+        }
+    }
+} 

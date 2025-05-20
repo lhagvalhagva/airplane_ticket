@@ -1,10 +1,21 @@
 using BlazorClient.Components;
+using Microsoft.AspNetCore.SignalR.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Add SignalR client
+builder.Services.AddSingleton<HubConnection>(sp =>
+{
+    var hubUrl = builder.Configuration["SignalR:HubUrl"] ?? "https://localhost:5027/flightHub";
+    return new HubConnectionBuilder()
+        .WithUrl(hubUrl)
+        .WithAutomaticReconnect()
+        .Build();
+});
 
 var app = builder.Build();
 

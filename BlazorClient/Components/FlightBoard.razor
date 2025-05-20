@@ -1,0 +1,66 @@
+@using BlazorClient.Components
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager Navigation
+
+@code {
+    private List<FlightInfoModel> flights = new();
+    private HubConnection? hubConnection;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/flightHub"))
+            .Build();
+
+        hubConnection.On<List<FlightInfoModel>>("ReceiveFlights", (updatedFlights) =>
+        {
+            flights = updatedFlights;
+            StateHasChanged();
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+
+    private string GetStatusClass(string status) => status switch
+    {
+        "Delayed" => "status-delayed",
+        "Cancelled" => "status-cancelled",
+        "Boarding" => "status-boarding",
+        "Check-in" => "status-checkin",
+        "Departed" => "status-departed",
+        _ => ""
+    };
+}
+
+<h2 class="departures-title">Departures</h2>
+<table class="departures-table">
+    <thead>
+        <tr>
+            <th>Time</th>
+            <th>Destination</th>
+            <th>Flight</th>
+            <th>Gate</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var flight in flights)
+        {
+            <tr>
+                <td>@flight.Time</td>
+                <td>@flight.Destination</td>
+                <td>@flight.Flight</td>
+                <td>@flight.Gate</td>
+                <td class="@GetStatusClass(flight.Status)">@flight.Status</td>
+            </tr>
+        }
+    </tbody>
+</table> 
