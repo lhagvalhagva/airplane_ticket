@@ -83,22 +83,23 @@ namespace BusinessLogic.Services
             if (seat.IsOccupied)
                 throw new InvalidOperationException($"Суудал {seat.SeatNumber} аль хэдийн захиалагдсан байна.");
 
-            // Зорчигч өөр суудалд бүртгэгдсэн эсэхийг шалгах
             var existingSeats = await _seatRepository.FindAsync(
                 s => s.FlightId == flightId && s.PassengerId == passengerId);
             
             if (existingSeats.Any())
                 throw new InvalidOperationException($"Зорчигч ID {passengerId} нь нислэг ID {flightId} дээр өөр суудалд бүртгегдсэн байна.");
 
-            // Суудлыг захиалах
             seat.IsOccupied = true;
             seat.PassengerId = passengerId;
             seat.CheckInTime = DateTime.UtcNow;
 
+            passenger.CheckedIn = true;
+
             await _seatRepository.UpdateAsync(seat);
+            await _passengerRepository.UpdateAsync(passenger);
             await _seatRepository.SaveChangesAsync();
+            await _passengerRepository.SaveChangesAsync();
             
-            // Суудал оноогдсон тухай мэдэгдэл илгээх
             await _notificationService.NotifySeatAssignedAsync(flightId, seat.SeatNumber, passengerId);
 
             return true;
