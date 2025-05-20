@@ -52,31 +52,6 @@ namespace RestApi.Controllers
         }
 
         /// <summary>
-        /// Тодорхой нислэгийн боломжтой (сул) суудлуудын жагсаалтыг авах
-        /// </summary>
-        /// <param name="flightId">Нислэгийн ID</param>
-        /// <returns>Боломжтой суудлуудын жагсаалт</returns>
-        /// <response code="200">Боломжтой суудлуудын жагсаалт амжилттай буцаагдсан</response>
-        /// <response code="404">Нислэг олдоогүй</response>
-        [HttpGet("available")]
-        public async Task<ActionResult<IEnumerable<Seat>>> GetAvailableSeats(int flightId)
-        {
-            try
-            {
-                var seats = await _seatService.GetAvailableSeatsByFlightIdAsync(flightId);
-                return Ok(seats);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-
-        /// <summary>
         /// Суудал оноох (зорчигч + суудал ID)
         /// </summary>
         /// <param name="flightId">Нислэгийн ID</param>
@@ -123,6 +98,50 @@ namespace RestApi.Controllers
             {
                 var result = await _seatService.ReleaseSeatAsync(flightId, seatId);
                 return Ok(new { success = result });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        
+        /// <summary>
+        /// Зорчигчийн суудлыг олох
+        /// </summary>
+        /// <param name="flightId">Нислэгийн ID</param>
+        /// <param name="passengerId">Зорчигчийн ID</param>
+        /// <returns>Зорчигчийн суудлын мэдээлэл</returns>
+        /// <response code="200">Зорчигчийн суудлын мэдээлэл амжилттай буцаагдсан</response>
+        /// <response code="404">Нислэг, зорчигч эсвэл суудал олдоогүй</response>
+        [HttpGet("passenger/{passengerId}")]
+        public async Task<ActionResult<Seat>> GetPassengerSeat(int flightId, int passengerId)
+        {
+            try
+            {
+                var seat = await _seatService.GetPassengerSeatAsync(flightId, passengerId);
+                if (seat == null)
+                {
+                    return Ok(new { hasAssignedSeat = false, message = $"Зорчигч ID {passengerId} нь суудал аваагүй байна." });
+                }
+                var seatDto = new
+                {
+                    id = seat.Id,
+                    flightId = seat.FlightId,
+                    seatNumber = seat.SeatNumber,
+                    isOccupied = seat.IsOccupied,
+                    passengerId = seat.PassengerId,
+                    checkInTime = seat.CheckInTime
+                };
+                
+                return Ok(new { hasAssignedSeat = true, seat = seatDto });
             }
             catch (KeyNotFoundException ex)
             {

@@ -51,19 +51,6 @@ namespace BusinessLogic.Services
             await _flightRepository.SaveChangesAsync();
         }
 
-        public async Task UpdateFlightStatusAsync(int flightId, FlightStatus status)
-        {
-            var flight = await _flightRepository.GetByIdAsync(flightId);
-            if (flight == null)
-                throw new KeyNotFoundException($"Flight with ID {flightId} not found.");
-
-            flight.Status = status;
-            await _flightRepository.UpdateAsync(flight);
-            await _flightRepository.SaveChangesAsync();
-            
-            await _notificationService.NotifyFlightStatusChangedAsync(flightId, status);
-        }
-
         public async Task<bool> FlightExistsAsync(int flightId)
         {
             var flight = await _flightRepository.GetByIdAsync(flightId);

@@ -37,14 +37,6 @@ namespace BusinessLogic.Services
         Task UpdateFlightAsync(Flight flight);
 
         /// <summary>
-        /// Нислэгийн төлөвийг шинэчлэх.
-        /// </summary>
-        /// <param name="flightId">Нислэгийн ID</param>
-        /// <param name="status">Нислэгийн шинэ төлөв</param>
-        /// <returns>Үйлдлийн үр дүн</returns>
-        Task UpdateFlightStatusAsync(int flightId, FlightStatus status);
-
-        /// <summary>
         /// Нислэг устгах.
         /// </summary>
         /// <param name="id">Нислэгийн ID</param>

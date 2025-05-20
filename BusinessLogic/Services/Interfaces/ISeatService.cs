@@ -18,13 +18,6 @@ namespace BusinessLogic.Services
         Task<IEnumerable<Seat>> GetSeatsByFlightIdAsync(int flightId, bool? isOccupied = null);
 
         /// <summary>
-        /// Тодорхой нислэгийн боломжтой (сул) суудлуудын жагсаалтыг авах.
-        /// </summary>
-        /// <param name="flightId">Нислэгийн ID</param>
-        /// <returns>Боломжтой суудлуудын жагсаалт</returns>
-        Task<IEnumerable<Seat>> GetAvailableSeatsByFlightIdAsync(int flightId);
-
-        /// <summary>
         /// Суудлыг ID-аар авах.
         /// </summary>
         /// <param name="seatId">Суудлын ID</param>
@@ -61,5 +54,13 @@ namespace BusinessLogic.Services
         /// <param name="seatId">Суудлын ID</param>
         /// <returns>Суудал сул эсэх</returns>
         Task<bool> IsSeatAvailableAsync(int seatId);
+        
+        /// <summary>
+        /// Зорчигчийн суудлыг олох.
+        /// </summary>
+        /// <param name="flightId">Нислэгийн ID</param>
+        /// <param name="passengerId">Зорчигчийн ID</param>
+        /// <returns>Зорчигчийн суудлын мэдээлэл, эсвэл null</returns>
+        Task<Seat?> GetPassengerSeatAsync(int flightId, int passengerId);
     }
 }

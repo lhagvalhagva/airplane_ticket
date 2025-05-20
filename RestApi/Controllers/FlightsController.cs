@@ -147,34 +147,6 @@ namespace RestApi.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
-        /// <summary>
-        /// Нислэгийн төлөвийг шинэчлэх.
-        /// </summary>
-        /// <param name="id">Нислэгийн ID</param>
-        /// <param name="statusDto">Нислэгийн шинэ төлөв</param>
-        /// <returns>Үйлдлийн үр дүн</returns>
-        /// <response code="204">Нислэгийн төлөв амжилттай шинэчлэгдсэн</response>
-        /// <response code="404">Нислэг олдсонгүй</response>
-        /// <response code="400">Нислэгийн төлөв буруу</response>
-        [HttpPut("{id}/status")]
-        public async Task<IActionResult> UpdateFlightStatus(int id, [FromBody] UpdateFlightStatusDto statusDto)
-        {
-            try
-            {
-                if (!await _flightService.FlightExistsAsync(id))
-                {
-                    return NotFound($"Flight with ID {id} not found.");
-                }
-
-                await _flightService.UpdateFlightStatusAsync(id, statusDto.Status);
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
     }
 
     /// <summary>

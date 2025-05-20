@@ -45,10 +45,6 @@ namespace BusinessLogic.Services
             return seats.ToList();
         }
 
-        public async Task<IEnumerable<Seat>> GetAvailableSeatsByFlightIdAsync(int flightId)
-        {
-            return await GetSeatsByFlightIdAsync(flightId, false);
-        }
 
         public async Task<Seat?> GetSeatByIdAsync(int seatId)
         {
@@ -159,6 +155,34 @@ namespace BusinessLogic.Services
                 throw new KeyNotFoundException($"Seat with ID {seatId} not found.");
 
             return !seat.IsOccupied;
+        }
+        
+        /// <summary>
+        /// Зорчигчийн суудлыг олох
+        /// </summary>
+        /// <param name="flightId">Нислэгийн ID</param>
+        /// <param name="passengerId">Зорчигчийн ID</param>
+        /// <returns>Зорчигчийн суудлын мэдээлэл, эсвэл null</returns>
+        public async Task<Seat?> GetPassengerSeatAsync(int flightId, int passengerId)
+        {
+            var flight = await _flightRepository.GetByIdAsync(flightId);
+            if (flight == null)
+                throw new KeyNotFoundException($"Нислэг ID {flightId} олдсонгүй.");
+
+            var passenger = await _passengerRepository.GetByIdAsync(passengerId);
+            if (passenger == null)
+                throw new KeyNotFoundException($"Зорчигч ID {passengerId} олдсонгүй.");
+
+            var flightPassenger = (await _flightPassengerRepository.FindAsync(
+                fp => fp.FlightId == flightId && fp.PassengerId == passengerId)).FirstOrDefault();
+                
+            if (flightPassenger == null)
+                throw new InvalidOperationException($"Зорчигч ID {passengerId} нь нислэг ID {flightId} дээр бүртгүүлээгүй байна.");
+
+            var seat = (await _seatRepository.FindAsync(
+                s => s.FlightId == flightId && s.PassengerId == passengerId)).FirstOrDefault();
+            
+            return seat;
         }
     }
 }
