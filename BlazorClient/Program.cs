@@ -1,11 +1,16 @@
 using BlazorClient.Components;
 using Microsoft.AspNetCore.SignalR.Client;
+using System.Net.Http;
+using SignalRHubLibrary;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Add HttpClient service
+builder.Services.AddScoped<HttpClient>();
 
 // Add SignalR client
 builder.Services.AddSingleton<HubConnection>(sp =>
@@ -31,6 +36,9 @@ app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseAntiforgery();
+
+// Configure SignalR Hub endpoint
+app.MapHub<SignalRHubLibrary.FlightHub>("/flightHub");
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

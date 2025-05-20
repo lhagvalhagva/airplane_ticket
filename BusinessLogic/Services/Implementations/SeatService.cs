@@ -107,7 +107,6 @@ namespace BusinessLogic.Services
 
         public async Task<bool> ReleaseSeatAsync(int flightId, int seatId)
         {
-            // Нислэг, суудал бүгд байгаа эсэхийг шалгах
             var flight = await _flightRepository.GetByIdAsync(flightId);
             if (flight == null)
                 throw new KeyNotFoundException($"Нислэг ID {flightId} олдсонгүй.");
@@ -116,7 +115,6 @@ namespace BusinessLogic.Services
             if (seat == null)
                 throw new KeyNotFoundException($"Суудал ID {seatId} олдсонгүй.");
 
-            // Суудал нислэгт хамаарах эсэхийг шалгах
             if (seat.FlightId != flightId)
                 throw new InvalidOperationException($"Суудал ID {seatId} нь нислэг ID {flightId} дээр хамаарахгүй байна.");
 
