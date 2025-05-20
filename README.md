@@ -76,3 +76,5 @@ curl -X PUT http://localhost:5027/api/flights/1/status \
 - 3: Delayed (Хойшилсон)
 - 4: Landed (Газардсан)
 - 5: Cancelled (Цуцлагдсан)
+
+### ЭХЛЭЭД ХЭРЭГЭЛЭГЧ СУУДЛАА СОНГООД ДАРАА НЬ ТАСАЛБАРАА ХЭВЛЭХ ЁСТОЙ 
