@@ -15,7 +15,7 @@ namespace BusinessLogic.Services
         private readonly IRepository<FlightPassenger> _flightPassengerRepository;
         private readonly INotificationService _notificationService;
 
-        public SeatService(
+        public SeatService( 
             IRepository<Seat> seatRepository,
             IRepository<Flight> flightRepository, 
             IRepository<Passenger> passengerRepository,

@@ -10,7 +10,7 @@ namespace BusinessLogic.Services
         
         public NotificationService()
         {
-            _defaultTarget = NotificationTarget.Both; // Дефолтоор хоёр системийг хэрэглэх
+            _defaultTarget = NotificationTarget.Both;
         }
 
         public async Task NotifyFlightStatusChangedAsync(int flightId, FlightStatus newStatus)
