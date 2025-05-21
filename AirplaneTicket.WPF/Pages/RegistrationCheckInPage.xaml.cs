@@ -175,16 +175,39 @@ namespace AirplaneTicket.WPF.Pages
 
         private void UpdatePassengerList()
         {
-            var registeredPassengers = passengers
-                .Select(p => new
-                {
-                    FullName = $"{p.FirstName} {p.LastName}",
-                    p.PassportNumber,
-                    SeatNumber = p.SeatNumber ?? "Not assigned"
-                })
-                .ToList();
+            try
+            {
+                var registeredPassengers = passengers
+                    .Select(p => new
+                    {
+                        FullName = $"{p.FirstName} {p.LastName}",
+                        p.PassportNumber,
+                        SeatNumber = GetSeatNumberForPassenger(p) ?? "Not assigned"
+                    })
+                    .ToList();
+                
+                PassengerList.ItemsSource = registeredPassengers;
+            }
+            catch (Exception ex)
+            {
+                ShowToast($"Зорчигчийн жагсаалт шинэчлэхэд алдаа гарлаа: {ex.Message}", "error");
+            }
+        }
 
-            PassengerList.ItemsSource = registeredPassengers;
+        private string? GetSeatNumberForPassenger(Passenger passenger)
+        {
+            try
+            {
+                var seat = seatList.FirstOrDefault(s => s.IsOccupied && 
+                    seatList.Where(seat => seat.Id == s.Id)
+                    .Any(seat => seat.PassengerId == passenger.Id));
+                    
+                return seat?.SeatNumber;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private async Task LoadAvailableSeatsAsync()
@@ -358,9 +381,10 @@ namespace AirplaneTicket.WPF.Pages
                 ShowLoading(true);
                 // Assign seat using the correct API
                 var success = await _airplaneService.AssignSeatAsync(currentFlightId, currentPassenger.Id, _selectedSeat.Id);
+                Console.WriteLine($"ssssdfsdfss,{currentPassenger.Id}{_selectedSeat.Id}");
                 if (!success)
                 {
-                    ShowToast("Суудал оноох үед алдаа гарлаа (API).", "error");
+                    ShowToast("Суудал оноох үед алдаа гарлаа (API).(EX.)", "error");
                     return;
                 }
 
