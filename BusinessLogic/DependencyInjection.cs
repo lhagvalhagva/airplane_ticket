@@ -53,9 +53,13 @@ namespace BusinessLogic
         /// <summary>
         /// Өгөгдлийн санг үүсгэж, анхны өгөгдлүүдийг оруулах
         /// </summary>
-        public static async Task InitializeDatabaseAsync()
-        {
-            await DbInitializer.CreateAndInitializeDatabase();
+        public static async Task InitializeDatabaseAsync(IServiceProvider serviceProvider)
+        {           
+            using (var scope = serviceProvider.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<AirportDbContext>();
+                await DbInitializer.InitializeAsync(dbContext);
+            }
         }
     }
 } 
