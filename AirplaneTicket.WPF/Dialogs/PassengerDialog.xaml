@@ -2,7 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-        Title="{Binding DialogTitle}" Height="500" Width="400"
+        Title="New Passenger Details" 
+        Height="450" Width="400"
         WindowStartupLocation="CenterOwner"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         Background="{DynamicResource MaterialDesignPaper}"
@@ -11,49 +12,53 @@
         FontFamily="{materialDesign:MaterialDesignFont}">
     <Grid Margin="20">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Margin="0,0,0,20">
-            <TextBox x:Name="txtFirstName" 
+        <!-- Header -->
+        <TextBlock Text="Enter Passenger Details" 
+                   Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                   Margin="0,0,0,20"/>
+
+        <!-- Form -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,20">
+            <TextBox x:Name="FirstNameTextBox"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
                      materialDesign:HintAssist.Hint="First Name"
-                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
                      Margin="0,0,0,10"/>
             
-            <TextBox x:Name="txtLastName"
+            <TextBox x:Name="LastNameTextBox"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
                      materialDesign:HintAssist.Hint="Last Name"
-                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
                      Margin="0,0,0,10"/>
             
-            <TextBox x:Name="txtEmail"
+            <TextBox x:Name="EmailTextBox"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
                      materialDesign:HintAssist.Hint="Email"
-                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
                      Margin="0,0,0,10"/>
             
-            <TextBox x:Name="txtPhone"
+            <TextBox x:Name="PhoneTextBox"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
                      materialDesign:HintAssist.Hint="Phone Number"
-                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                     Margin="0,0,0,10"/>
-            
-            <DatePicker x:Name="dpDateOfBirth"
-                        materialDesign:HintAssist.Hint="Date of Birth"
-                        Style="{StaticResource MaterialDesignOutlinedDatePicker}"
-                        Margin="0,0,0,10"/>
-            
-            <TextBox x:Name="txtPassport"
-                     materialDesign:HintAssist.Hint="Passport Number"
-                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
                      Margin="0,0,0,10"/>
         </StackPanel>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button x:Name="btnCancel" Content="Cancel" 
+        <!-- Buttons -->
+        <StackPanel Grid.Row="2" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right">
+            <Button x:Name="CancelButton"
+                    Content="Cancel"
                     Style="{StaticResource MaterialDesignOutlinedButton}"
-                    Click="btnCancel_Click" Margin="0,0,10,0"/>
-            <Button x:Name="btnSave" Content="Save" 
+                    Margin="0,0,10,0"
+                    Click="CancelButton_Click"/>
+            
+            <Button x:Name="SaveButton"
+                    Content="Save"
                     Style="{StaticResource MaterialDesignRaisedButton}"
-                    Click="btnSave_Click"/>
+                    Click="SaveButton_Click"/>
         </StackPanel>
     </Grid>
 </Window> 

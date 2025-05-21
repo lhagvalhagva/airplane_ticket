@@ -1,0 +1,227 @@
+<Page x:Class="AirplaneTicket.WPF.Pages.RegistrationCheckInPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:AirplaneTicket.WPF.Pages"
+      mc:Ignorable="d" 
+      d:DesignHeight="720" d:DesignWidth="1280"
+      Title="Registration and Check-in">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1" Margin="20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left Side - Flight Selection -->
+            <Border Grid.Column="0" 
+                    Background="White" 
+                    CornerRadius="10" 
+                    Margin="0,0,10,0"
+                    BorderBrush="#DDDDDD"
+                    BorderThickness="1">
+                <Grid Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Passenger Search -->
+                    <StackPanel Grid.Row="1" Margin="0,0,0,20">
+                        <TextBlock Text="Зорчигч хайх" 
+                                 FontSize="18" 
+                                 FontWeight="SemiBold" 
+                                 Margin="0,0,0,10"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="PassportNumberTextBox" 
+                                   Height="40" 
+                                   Margin="0,0,10,0"
+                                   Padding="10,0"
+                                   VerticalContentAlignment="Center">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox">
+                                        <Style.Resources>
+                                            <VisualBrush x:Key="PlaceholderBrush" TileMode="None" Opacity="0.5" Stretch="None" AlignmentX="Left" AlignmentY="Center">
+                                                <VisualBrush.Visual>
+                                                    <TextBlock Text="Гарын үсгийн дугаар"/>
+                                                </VisualBrush.Visual>
+                                            </VisualBrush>
+                                        </Style.Resources>
+                                        <Style.Triggers>
+                                            <Trigger Property="Text" Value="">
+                                                <Setter Property="Background" Value="{StaticResource PlaceholderBrush}"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                            <Button x:Name="SearchButton" 
+                                  Grid.Column="1"
+                                  Content="Хайх" 
+                                  Height="40" 
+                                  Width="100"
+                                  Background="#007BFF"
+                                  Foreground="White"
+                                  Click="SearchButton_Click"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Passenger Info -->
+                    <Border Grid.Row="2" 
+                            Background="#F8F9FA" 
+                            CornerRadius="5" 
+                            Padding="15"
+                            Margin="0,0,0,20">
+                        <StackPanel>
+                            <TextBlock x:Name="PassengerNameText" 
+                                     FontSize="16" 
+                                     FontWeight="SemiBold"
+                                     Margin="0,0,0,5"/>
+                            <TextBlock x:Name="PassengerPassportText" 
+                                     Foreground="#666666"
+                                     Margin="0,0,0,5"/>
+                            <TextBlock x:Name="PassengerContactText" 
+                                     Foreground="#666666"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Registered Passengers List -->
+                    <Border Grid.Row="3" 
+                            Background="#F8F9FA" 
+                            CornerRadius="5" 
+                            Padding="15">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Бүртгэлтэй зорчигчид" 
+                                     FontSize="16" 
+                                     FontWeight="SemiBold" 
+                                     Margin="0,0,0,10"/>
+                            <ListView x:Name="PassengerList" Grid.Row="1" Margin="0,10,0,0" 
+                                      SelectionChanged="PassengerList_SelectionChanged">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn Header="Нэр" DisplayMemberBinding="{Binding FullName}"/>
+                                        <GridViewColumn Header="Гарын үсгийн дугаар" DisplayMemberBinding="{Binding PassportNumber}"/>
+                                        <GridViewColumn Header="Суудал" DisplayMemberBinding="{Binding SeatNumber}"/>
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Right Side - Seat Map -->
+            <Border Grid.Column="1" 
+                    Background="White" 
+                    CornerRadius="10" 
+                    Margin="10,0,0,0"
+                    BorderBrush="#DDDDDD"
+                    BorderThickness="1">
+                <Grid Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Flight Selection (moved here) -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                        <ComboBox x:Name="FlightComboBox" Width="200" Margin="0,0,20,0"/>
+                        <ComboBox x:Name="FlightStatusComboBox" Width="150"/>
+                    </StackPanel>
+
+                    <!-- Flight Info Box -->
+                    <Border Grid.Row="1" Background="#F8F9FA" CornerRadius="5" Padding="10" Margin="0,0,0,10">
+                        <StackPanel>
+                            <TextBlock x:Name="FlightInfoNumber" FontWeight="Bold"/>
+                            <TextBlock x:Name="FlightInfoRoute"/>
+                            <TextBlock x:Name="FlightInfoTime"/>
+                            <TextBlock x:Name="FlightInfoStatus"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Seat Map Title -->
+                    <TextBlock Grid.Row="2" Text="Суудлын зураг" 
+                             FontSize="18" 
+                             FontWeight="SemiBold" 
+                             Margin="0,0,0,20"/>
+
+                    <!-- Seat Map Grid -->
+                    <Grid x:Name="SeatMapGrid" Grid.Row="2">
+                        <!-- Grid will be populated in code-behind -->
+                    </Grid>
+
+                    <!-- Legend -->
+                    <StackPanel Grid.Row="3" 
+                              Orientation="Horizontal" 
+                              HorizontalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
+                            <Border Width="20" 
+                                    Height="20" 
+                                    Background="#28A745" 
+                                    Margin="0,0,5,0"/>
+                            <TextBlock Text="Чөлөөт" 
+                                     VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="20" 
+                                    Height="20" 
+                                    Background="#FFC107" 
+                                    Margin="0,0,5,0"/>
+                            <TextBlock Text="Сонгосон" 
+                                     VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Loading Overlay -->
+        <Grid x:Name="LoadingOverlay" 
+              Grid.RowSpan="2" 
+              Background="#80000000" 
+              Visibility="Collapsed">
+            <StackPanel VerticalAlignment="Center" 
+                      HorizontalAlignment="Center">
+                <TextBlock Text="Түр хүлээнэ үү..." 
+                         Foreground="White" 
+                         FontSize="18" 
+                         HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Toast Notification -->
+        <Border x:Name="ToastNotification" 
+                Grid.RowSpan="2"
+                Background="#323232" 
+                CornerRadius="5" 
+                Padding="20,10" 
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Bottom" 
+                Margin="0,0,0,20" 
+                Visibility="Collapsed">
+            <TextBlock x:Name="ToastText" 
+                     Foreground="White" 
+                     FontSize="14"/>
+        </Border>
+    </Grid>
+</Page> 

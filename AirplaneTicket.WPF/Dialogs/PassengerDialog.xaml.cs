@@ -6,60 +6,79 @@ namespace AirplaneTicket.WPF.Dialogs
 {
     public partial class PassengerDialog : Window
     {
-        private readonly Passenger _passenger;
-        private readonly bool _isEdit;
+        public Passenger? Result { get; private set; }
+        private readonly string _passportNumber;
 
-        public string DialogTitle => _isEdit ? "Edit Passenger" : "Add Passenger";
-
-        public PassengerDialog(Passenger passenger = null)
+        public PassengerDialog(string passportNumber)
         {
             InitializeComponent();
-            _isEdit = passenger != null;
-            _passenger = passenger ?? new Passenger();
-
-            if (_isEdit)
-            {
-                txtFirstName.Text = _passenger.FirstName;
-                txtLastName.Text = _passenger.LastName;
-                txtEmail.Text = _passenger.Email;
-                txtPhone.Text = _passenger.PhoneNumber;
-                dpDateOfBirth.SelectedDate = _passenger.DateOfBirth;
-                txtPassport.Text = _passenger.PassportNumber;
-            }
-
-            DataContext = this;
+            _passportNumber = passportNumber;
+            
+            // Set the passport number in the window title
+            Title = $"New Passenger Details - Passport: {passportNumber}";
         }
 
-        private void btnCancel_Click(object sender, RoutedEventArgs e)
+        private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
-            Close();
-        }
-
-        private void btnSave_Click(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(txtFirstName.Text) ||
-                string.IsNullOrWhiteSpace(txtLastName.Text) ||
-                string.IsNullOrWhiteSpace(txtEmail.Text) ||
-                string.IsNullOrWhiteSpace(txtPhone.Text) ||
-                !dpDateOfBirth.SelectedDate.HasValue ||
-                string.IsNullOrWhiteSpace(txtPassport.Text))
+            if (string.IsNullOrWhiteSpace(FirstNameTextBox.Text) ||
+                string.IsNullOrWhiteSpace(LastNameTextBox.Text) ||
+                string.IsNullOrWhiteSpace(EmailTextBox.Text) ||
+                string.IsNullOrWhiteSpace(PhoneTextBox.Text))
             {
                 MessageBox.Show("Please fill in all fields.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            _passenger.FirstName = txtFirstName.Text;
-            _passenger.LastName = txtLastName.Text;
-            _passenger.Email = txtEmail.Text;
-            _passenger.PhoneNumber = txtPhone.Text;
-            _passenger.DateOfBirth = dpDateOfBirth.SelectedDate.Value;
-            _passenger.PassportNumber = txtPassport.Text;
+            // Validate email format
+            if (!IsValidEmail(EmailTextBox.Text))
+            {
+                MessageBox.Show("Please enter a valid email address.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Validate phone number format
+            if (!IsValidPhoneNumber(PhoneTextBox.Text))
+            {
+                MessageBox.Show("Please enter a valid phone number.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            Result = new Passenger
+            {
+                PassportNumber = _passportNumber,
+                FirstName = FirstNameTextBox.Text.Trim(),
+                LastName = LastNameTextBox.Text.Trim(),
+                Email = EmailTextBox.Text.Trim(),
+                PhoneNumber = PhoneTextBox.Text.Trim()
+            };
 
             DialogResult = true;
             Close();
         }
 
-        public Passenger GetPassenger() => _passenger;
+        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            DialogResult = false;
+            Close();
+        }
+
+        private bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private bool IsValidPhoneNumber(string phoneNumber)
+        {
+            // Basic phone number validation - can be enhanced based on your requirements
+            return System.Text.RegularExpressions.Regex.IsMatch(phoneNumber, @"^\+?[0-9\s\-\(\)]{8,}$");
+        }
     }
 } 

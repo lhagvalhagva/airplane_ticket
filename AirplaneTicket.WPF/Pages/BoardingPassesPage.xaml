@@ -1,52 +1,97 @@
 <Page x:Class="AirplaneTicket.WPF.Pages.BoardingPassesPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      Title="Boarding Passes">
-    <Grid Margin="20">
+      xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+      Title="Тасалбарууд"
+      Background="{StaticResource BackgroundLightBrush}">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Search and Add Controls -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,20">
-            <TextBox x:Name="txtSearch" Width="200" Margin="0,0,10,0" 
-                     TextChanged="txtSearch_TextChanged">
-                <TextBox.Style>
-                    <Style TargetType="TextBox">
-                        <Style.Resources>
-                            <VisualBrush x:Key="PlaceholderBrush" TileMode="None" Opacity="0.5" Stretch="None" AlignmentX="Left">
-                                <VisualBrush.Visual>
-                                    <TextBlock Text="Search boarding passes..."/>
-                                </VisualBrush.Visual>
-                            </VisualBrush>
-                        </Style.Resources>
-                        <Style.Triggers>
-                            <Trigger Property="Text" Value="">
-                                <Setter Property="Background" Value="{StaticResource PlaceholderBrush}"/>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBox.Style>
-            </TextBox>
-            <Button x:Name="btnAddBoardingPass" Content="Create Boarding Pass" 
-                    Click="btnAddBoardingPass_Click" Padding="10,5" Margin="0,0,10,0"/>
-            <Button x:Name="btnRefresh" Content="Refresh" 
-                    Click="btnRefresh_Click" Padding="10,5"/>
-        </StackPanel>
+        <!-- Page Title -->
+        <TextBlock Text="Тасалбарууд" 
+                   Style="{StaticResource PageTitleStyle}"/>
 
-        <!-- Boarding Passes DataGrid -->
-        <DataGrid x:Name="dgBoardingPasses" Grid.Row="1" AutoGenerateColumns="False" 
-                  IsReadOnly="True" SelectionMode="Single"
-                  SelectionChanged="dgBoardingPasses_SelectionChanged">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Flight #" Binding="{Binding Flight.FlightNumber}"/>
-                <DataGridTextColumn Header="Passenger" Binding="{Binding Passenger.LastName}"/>
-                <DataGridTextColumn Header="Seat" Binding="{Binding SeatNumber}"/>
-                <DataGridTextColumn Header="Boarding Time" Binding="{Binding BoardingTime, StringFormat=MM/dd/yyyy HH:mm}"/>
-                <DataGridTextColumn Header="Gate" Binding="{Binding Gate}"/>
-                <DataGridTextColumn Header="Status" Binding="{Binding Status}"/>
-            </DataGrid.Columns>
-        </DataGrid>
+        <!-- Main Content -->
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Search and Actions Section -->
+                <Grid Margin="0,0,0,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Search Control -->
+                    <TextBox x:Name="txtSearch" 
+                            Width="300" 
+                            materialDesign:HintAssist.Hint="Тасалбар хайх"
+                            Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="201,-76,189,76"/>
+
+                    <!-- Action Buttons -->
+                    <Button x:Name="btnRefresh" 
+                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                            materialDesign:ButtonAssist.CornerRadius="4"
+                            Click="btnRefresh_Click">
+                        <Button.ContentTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Refresh" 
+                                                           Margin="0,0,8,0"/>
+                                    <TextBlock Text="Шинэчлэх"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </Button.ContentTemplate>
+                    </Button>
+                </Grid>
+
+                <!-- Boarding Passes DataGrid -->
+                <DataGrid x:Name="dgBoardingPasses" 
+                         Grid.Row="1"
+                         AutoGenerateColumns="False"
+                         IsReadOnly="True"
+                         SelectionMode="Single"
+                         materialDesign:DataGridAssist.CellPadding="13 8 8 8"
+                         materialDesign:DataGridAssist.ColumnHeaderPadding="8"
+                         CanUserAddRows="False"
+                         CanUserDeleteRows="False"
+                         CanUserReorderColumns="True"
+                         CanUserResizeRows="False"
+                         CanUserSortColumns="True"
+                         SelectionChanged="dgBoardingPasses_SelectionChanged">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Тасалбарын дугаар" 
+                                          Binding="{Binding Id}"
+                                          Width="150"/>
+                        <DataGridTextColumn Header="Нислэгийн дугаар" 
+                                          Binding="{Binding FlightNumber}"
+                                          Width="120"/>
+                        <DataGridTextColumn Header="Зорчигч" 
+                                          Binding="{Binding PassengerName}"
+                                          Width="200"/>
+                        <DataGridTextColumn Header="Суудал" 
+                                          Binding="{Binding SeatNumber}"
+                                          Width="100"/>
+                        <DataGridTemplateColumn Header="Төлөв" Width="120">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Status}"
+                                             Foreground="{Binding Status, Converter={StaticResource StatusToColorConverter}}"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
     </Grid>
 </Page> 

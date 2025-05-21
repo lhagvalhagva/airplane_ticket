@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace BusinessLogic.Services
 {
@@ -31,20 +32,15 @@ namespace BusinessLogic.Services
 
         public async Task<IEnumerable<Seat>> GetSeatsByFlightIdAsync(int flightId, bool? isOccupied = null)
         {
-            var flight = await _flightRepository.GetByIdAsync(flightId);
-            if (flight == null)
-                throw new KeyNotFoundException($"Flight with ID {flightId} not found.");
-
             var seats = await _seatRepository.FindAsync(s => s.FlightId == flightId);
-
+            
             if (isOccupied.HasValue)
             {
                 seats = seats.Where(s => s.IsOccupied == isOccupied.Value);
             }
 
-            return seats.ToList();
+            return seats.OrderBy(s => s.SeatNumber);
         }
-
 
         public async Task<Seat?> GetSeatByIdAsync(int seatId)
         {

@@ -11,13 +11,14 @@ namespace AirplaneTicket.WPF.Pages
 {
     public partial class PassengersPage : Page
     {
-        private readonly ApiService _apiService;
+        private readonly AirplaneService _airplaneService;
         private List<Passenger> _allPassengers;
 
         public PassengersPage()
         {
             InitializeComponent();
-            _apiService = new ApiService();
+            _airplaneService = new AirplaneService();
+            _allPassengers = new List<Passenger>();
             LoadPassengers();
         }
 
@@ -25,7 +26,7 @@ namespace AirplaneTicket.WPF.Pages
         {
             try
             {
-                _allPassengers = await _apiService.GetPassengersAsync();
+                _allPassengers = await _airplaneService.GetPassengersAsync();
                 ApplyFilters();
             }
             catch (Exception ex)
@@ -66,13 +67,12 @@ namespace AirplaneTicket.WPF.Pages
 
         private async void btnAddPassenger_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new PassengerDialog();
-            if (dialog.ShowDialog() == true)
+            var dialog = new PassengerDialog(""); // Empty passport number for new passenger
+            if (dialog.ShowDialog() == true && dialog.Result != null)
             {
                 try
                 {
-                    var passenger = dialog.GetPassenger();
-                    await _apiService.CreatePassengerAsync(passenger);
+                    await _airplaneService.CreatePassengerAsync(dialog.Result);
                     LoadPassengers();
                 }
                 catch (Exception ex)
@@ -86,13 +86,13 @@ namespace AirplaneTicket.WPF.Pages
         {
             if (dgPassengers.SelectedItem is Passenger selectedPassenger)
             {
-                var dialog = new PassengerDialog(selectedPassenger);
-                if (dialog.ShowDialog() == true)
+                var dialog = new PassengerDialog(selectedPassenger.PassportNumber);
+                if (dialog.ShowDialog() == true && dialog.Result != null)
                 {
                     try
                     {
-                        var passenger = dialog.GetPassenger();
-                        await _apiService.UpdatePassengerAsync(passenger);
+                        dialog.Result.Id = selectedPassenger.Id; // Preserve the ID
+                        await _airplaneService.UpdatePassengerAsync(dialog.Result);
                         LoadPassengers();
                     }
                     catch (Exception ex)
@@ -117,7 +117,7 @@ namespace AirplaneTicket.WPF.Pages
                 {
                     try
                     {
-                        await _apiService.DeletePassengerAsync(selectedPassenger.Id);
+                        await _airplaneService.DeletePassengerAsync(selectedPassenger.Id);
                         LoadPassengers();
                     }
                     catch (Exception ex)

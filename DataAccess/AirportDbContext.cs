@@ -56,7 +56,15 @@ namespace DataAccess
                 .HasOne(s => s.Passenger)
                 .WithMany()
                 .HasForeignKey(s => s.PassengerId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false);
+
+            // FlightPassenger configuration
+            modelBuilder.Entity<FlightPassenger>()
+                .HasOne(fp => fp.Flight)
+                .WithMany(f => f.FlightPassengers)
+                .HasForeignKey(fp => fp.FlightId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 } 

@@ -10,13 +10,18 @@ namespace AirplaneTicket.WPF.Pages
 {
     public partial class FlightsPage : Page
     {
-        private readonly ApiService _apiService;
-        private List<Flight> _allFlights;
+        private readonly AirplaneService _airplaneService;
+        private List<Flight> _allFlights = new List<Flight>();
 
         public FlightsPage()
         {
             InitializeComponent();
-            _apiService = new ApiService();
+            _airplaneService = new AirplaneService();
+            
+            // Connect event handlers
+            txtSearch.TextChanged += txtSearch_TextChanged;
+            cmbFilter.SelectionChanged += cmbFilter_SelectionChanged;
+            
             LoadFlights();
         }
 
@@ -24,7 +29,7 @@ namespace AirplaneTicket.WPF.Pages
         {
             try
             {
-                _allFlights = await _apiService.GetFlightsAsync();
+                _allFlights = await _airplaneService.GetFlightsAsync();
                 ApplyFilters();
             }
             catch (Exception ex)
@@ -54,10 +59,10 @@ namespace AirplaneTicket.WPF.Pages
             {
                 switch (selectedItem.Content.ToString())
                 {
-                    case "Available Only":
+                    case "Зөвхөн чөлөөтэй":
                         filteredFlights = filteredFlights.Where(f => f.AvailableSeats > 0);
                         break;
-                    case "Today's Flights":
+                    case "Өнөөдрийн нислэгүүд":
                         var today = DateTime.Today;
                         filteredFlights = filteredFlights.Where(f => 
                             f.DepartureTime.Date == today || f.ArrivalTime.Date == today);

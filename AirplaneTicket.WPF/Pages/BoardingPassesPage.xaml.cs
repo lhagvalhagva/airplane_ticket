@@ -10,13 +10,13 @@ namespace AirplaneTicket.WPF.Pages
 {
     public partial class BoardingPassesPage : Page
     {
-        private readonly ApiService _apiService;
+        private readonly AirplaneService _airplaneService;
         private List<BoardingPass> _allBoardingPasses;
 
         public BoardingPassesPage()
         {
             InitializeComponent();
-            _apiService = new ApiService();
+            _airplaneService = new AirplaneService();
             LoadBoardingPasses();
         }
 
@@ -24,7 +24,7 @@ namespace AirplaneTicket.WPF.Pages
         {
             try
             {
-                _allBoardingPasses = await _apiService.GetBoardingPassesAsync();
+                _allBoardingPasses = await _airplaneService.GetBoardingPassesAsync();
                 ApplyFilters();
             }
             catch (Exception ex)

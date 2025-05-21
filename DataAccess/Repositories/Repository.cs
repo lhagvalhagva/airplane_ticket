@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using DataAccess.Extensions;
 
 namespace DataAccess.Repositories
 {
@@ -25,12 +26,12 @@ namespace DataAccess.Repositories
 
         public async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)
         {
-            return await _dbSet.Where(predicate).ToListAsync();
+            return await _dbSet.IncludeAll().Where(predicate).ToListAsync();
         }
 
         public async Task<T?> GetByIdAsync(int id)
         {
-            return await _dbSet.FindAsync(id);
+            return await _dbSet.IncludeAll().FirstOrDefaultAsync(e => EF.Property<int>(e, "Id") == id);
         }
 
         public async Task AddAsync(T entity)
