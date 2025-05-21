@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace DataAccess.Models
 {
@@ -29,7 +30,10 @@ namespace DataAccess.Models
         public FlightStatus Status { get; set; } = FlightStatus.CheckingIn;
         
         // Navigation properties
+        [JsonIgnore]
         public virtual ICollection<FlightPassenger> FlightPassengers { get; set; }
+        
+        [JsonIgnore]
         public virtual ICollection<Seat> Seats { get; set; } = new List<Seat>();
     }
 

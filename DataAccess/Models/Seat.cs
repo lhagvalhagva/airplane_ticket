@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace DataAccess.Models
 {
@@ -24,9 +25,11 @@ namespace DataAccess.Models
         public int FlightId { get; set; }
         
         [ForeignKey("FlightId")]
+        [JsonIgnore]
         public virtual Flight Flight { get; set; } = null!;
         
         [ForeignKey("PassengerId")]
+        [JsonIgnore]
         public virtual Passenger? Passenger { get; set; }
     }
 }

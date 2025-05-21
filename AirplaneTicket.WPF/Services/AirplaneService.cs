@@ -92,6 +92,11 @@ namespace AirplaneTicket.WPF.Services
             return await _httpClient.GetFromJsonAsync<List<Passenger>>($"{BaseUrl}/passengers");
         }
 
+        public async Task<List<BoardingPass>> GetBoardingPassesAsync()
+        {
+            return await _httpClient.GetFromJsonAsync<List<BoardingPass>>($"{BaseUrl}/boardingpasses");
+        }
+
         public async Task<List<Passenger>> GetPassengersByFlightAsync(int flightId)
         {
             return await _httpClient.GetFromJsonAsync<List<Passenger>>($"{BaseUrl}/flights/{flightId}/passengers");

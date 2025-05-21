@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using BusinessLogic.Services;
 using DataAccess.Models;
 using Microsoft.AspNetCore.Mvc;
+using RestApi.DTOs;
 
 namespace RestApi.Controllers
 {
@@ -67,12 +68,23 @@ namespace RestApi.Controllers
         /// <response code="200">Зорчигчдын жагсаалт амжилттай буцаагдсан</response>
         /// <response code="404">Нислэг олдсонгүй</response>
         [HttpGet("~/api/flights/{flightId}/passengers")]
-        public async Task<ActionResult<IEnumerable<Passenger>>> GetFlightPassengers(int flightId)
+        public async Task<ActionResult<IEnumerable<PassengerDto>>> GetFlightPassengers(int flightId)
         {
             try
             {
                 var passengers = await _flightPassengerService.GetPassengersByFlightIdAsync(flightId);
-                return Ok(passengers);
+                var passengerDtos = passengers.Select(p => new PassengerDto
+                {
+                    Id = p.Id,
+                    FirstName = p.FirstName,
+                    LastName = p.LastName,
+                    PassportNumber = p.PassportNumber,
+                    Nationality = p.Nationality,
+                    Email = p.Email,
+                    PhoneNumber = p.PhoneNumber,
+                    CheckedIn = p.CheckedIn
+                });
+                return Ok(passengerDtos);
             }
             catch (KeyNotFoundException ex)
             {
