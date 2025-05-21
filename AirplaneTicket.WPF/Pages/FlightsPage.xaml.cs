@@ -5,23 +5,20 @@ using System.Windows;
 using System.Windows.Controls;
 using AirplaneTicket.WPF.Models;
 using AirplaneTicket.WPF.Services;
+using AirplaneTicket.WPF.Dialogs;
 
 namespace AirplaneTicket.WPF.Pages
 {
     public partial class FlightsPage : Page
     {
         private readonly AirplaneService _airplaneService;
-        private List<Flight> _allFlights = new List<Flight>();
+        private List<Flight> _allFlights;
 
         public FlightsPage()
         {
             InitializeComponent();
             _airplaneService = new AirplaneService();
-            
-            // Connect event handlers
-            txtSearch.TextChanged += txtSearch_TextChanged;
-            cmbFilter.SelectionChanged += cmbFilter_SelectionChanged;
-            
+            _allFlights = new List<Flight>();
             LoadFlights();
         }
 
@@ -54,15 +51,15 @@ namespace AirplaneTicket.WPF.Pages
                     f.ArrivalCity.ToLower().Contains(searchTerm));
             }
 
-            // Apply combo box filter
-            if (cmbFilter.SelectedItem is ComboBoxItem selectedItem)
+            // Apply status filter
+            if (cmbFilter.SelectedIndex > 0)
             {
-                switch (selectedItem.Content.ToString())
+                switch (cmbFilter.SelectedIndex)
                 {
-                    case "Зөвхөн чөлөөтэй":
+                    case 1: // Only available
                         filteredFlights = filteredFlights.Where(f => f.AvailableSeats > 0);
                         break;
-                    case "Өнөөдрийн нислэгүүд":
+                    case 2: // Today's flights
                         var today = DateTime.Today;
                         filteredFlights = filteredFlights.Where(f => 
                             f.DepartureTime.Date == today || f.ArrivalTime.Date == today);
@@ -88,13 +85,71 @@ namespace AirplaneTicket.WPF.Pages
             LoadFlights();
         }
 
-        private void dgFlights_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private async void btnAddFlight_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new FlightDialog();
+            if (dialog.ShowDialog() == true && dialog.Result != null)
+            {
+                try
+                {
+                    await _airplaneService.CreateFlightAsync(dialog.Result);
+                    LoadFlights();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error creating flight: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private async void btnEdit_Click(object sender, RoutedEventArgs e)
         {
             if (dgFlights.SelectedItem is Flight selectedFlight)
             {
-                // TODO: Implement flight selection logic
-                // For example, navigate to a booking page or show flight details
+                var dialog = new FlightDialog(selectedFlight);
+                if (dialog.ShowDialog() == true && dialog.Result != null)
+                {
+                    try
+                    {
+                        await _airplaneService.UpdateFlightAsync(dialog.Result);
+                        LoadFlights();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error updating flight: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
             }
+        }
+
+        private async void btnDelete_Click(object sender, RoutedEventArgs e)
+        {
+            if (dgFlights.SelectedItem is Flight selectedFlight)
+            {
+                var result = MessageBox.Show(
+                    $"Are you sure you want to delete flight {selectedFlight.FlightNumber}?",
+                    "Confirm Delete",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    try
+                    {
+                        await _airplaneService.DeleteFlightAsync(selectedFlight.Id);
+                        LoadFlights();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error deleting flight: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+        }
+
+        private void dgFlights_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // Selection is handled by the edit and delete buttons
         }
     }
 } 

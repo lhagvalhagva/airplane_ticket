@@ -69,6 +69,8 @@
                             <TextBlock Text="Тасалбарууд"/>
                         </StackPanel>
                     </Button>
+                    <Button Name="btnExit" Content="Гарах" Click="ExitButton_Click" 
+                            Style="{StaticResource MaterialDesignOutlinedButton}"/>
                 </StackPanel>
             </DockPanel>
         </materialDesign:ColorZone>

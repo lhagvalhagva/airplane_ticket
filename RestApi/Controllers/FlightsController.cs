@@ -1,10 +1,8 @@
 using BusinessLogic.Services;
 using DataAccess.Models;
 using Microsoft.AspNetCore.Mvc;
-using RestApi.Models;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 
 namespace RestApi.Controllers
@@ -18,14 +16,17 @@ namespace RestApi.Controllers
     public class FlightsController : ControllerBase
     {
         private readonly IFlightService _flightService;
+        private readonly ISeatService _seatService;
 
         /// <summary>
         /// FlightsController-ийн байгуулагч.
         /// </summary>
         /// <param name="flightService">Нислэгийн үйлчилгээ</param>
-        public FlightsController(IFlightService flightService)
+        /// <param name="seatService">Залгаайн үйлчилгээ</param>
+        public FlightsController(IFlightService flightService, ISeatService seatService)
         {
             _flightService = flightService;
+            _seatService = seatService;
         }
 
         /// <summary>
@@ -51,12 +52,8 @@ namespace RestApi.Controllers
         public async Task<ActionResult<Flight>> GetFlight(int id)
         {
             var flight = await _flightService.GetFlightByIdAsync(id);
-
             if (flight == null)
-            {
-                return NotFound($"Flight with ID {id} not found.");
-            }
-
+                return NotFound();
             return Ok(flight);
         }
 
@@ -68,11 +65,31 @@ namespace RestApi.Controllers
         /// <response code="201">Нислэг амжилттай үүсгэгдсэн</response>
         /// <response code="400">Нислэгийн мэдээлэл буруу</response>
         [HttpPost]
-        public async Task<ActionResult<Flight>> CreateFlight(Flight flight)
+        public async Task<ActionResult<Flight>> CreateFlight([FromBody] Flight flight)
         {
             try
             {
+                // Add the flight first
                 await _flightService.AddFlightAsync(flight);
+
+                // Initialize seats for the flight
+                var seats = new List<Seat>();
+                for (int i = 1; i <= flight.AvailableSeats; i++)
+                {
+                    seats.Add(new Seat
+                    {
+                        FlightId = flight.Id,
+                        SeatNumber = $"{i}A",
+                        IsOccupied = false
+                    });
+                }
+
+                // Add all seats
+                foreach (var seat in seats)
+                {
+                    await _seatService.AddSeatAsync(seat);
+                }
+
                 return CreatedAtAction(nameof(GetFlight), new { id = flight.Id }, flight);
             }
             catch (Exception ex)
@@ -85,49 +102,21 @@ namespace RestApi.Controllers
         /// Нислэгийн мэдээллийг шинэчлэх.
         /// </summary>
         /// <param name="id">Нислэгийн ID</param>
-        /// <param name="flightDto">Нислэгийн шинэчлэгдсэн мэдээлэл</param>
+        /// <param name="flight">Нислэгийн шинэчлэгдсэн мэдээлэл</param>
         /// <returns>Үйлдлийн үр дүн</returns>
         /// <response code="204">Нислэгийн мэдээлэл амжилттай шинэчлэгдсэн</response>
         /// <response code="404">Нислэг олдсонгүй</response>
         /// <response code="400">Нислэгийн мэдээлэл буруу</response>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateFlight(int id, [FromBody] UpdateFlightDto flightDto)
+        public async Task<IActionResult> UpdateFlight(int id, [FromBody] Flight flight)
         {
-            try
-            {
-                if (id != flightDto.Id)
-                {
-                    return BadRequest("Flight ID in URL does not match ID in request body.");
-                }
-
-                if (!await _flightService.FlightExistsAsync(id))
-                {
-                    return NotFound($"Flight with ID {id} not found.");
-                }
-                
-                // DTO-г домэйн модел болгон хөрвүүлэх
-                var existingFlight = await _flightService.GetFlightByIdAsync(id);
-                if (existingFlight == null)
-                {
-                    return NotFound($"Flight with ID {id} not found.");
-                }
-                
-                // Зөвхөн шаардлагатай талбаруудын утгыг өөрчлөх
-                existingFlight.FlightNumber = flightDto.FlightNumber;
-                existingFlight.DepartureCity = flightDto.DepartureCity;
-                existingFlight.ArrivalCity = flightDto.ArrivalCity;
-                existingFlight.DepartureTime = flightDto.DepartureTime;
-                existingFlight.ArrivalTime = flightDto.ArrivalTime;
-                existingFlight.Status = flightDto.Status;
-                
-                // Шинэчлэгдсэн нислэгийг хадгалах
-                await _flightService.UpdateFlightAsync(existingFlight);
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            if (id != flight.Id)
+                return BadRequest();
+            var existing = await _flightService.GetFlightByIdAsync(id);
+            if (existing == null)
+                return NotFound();
+            await _flightService.UpdateFlightAsync(flight);
+            return NoContent();
         }
 
         /// <summary>
@@ -141,40 +130,11 @@ namespace RestApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteFlight(int id)
         {
-            try
-            {
-                if (!await _flightService.FlightExistsAsync(id))
-                {
-                    return NotFound($"Flight with ID {id} not found.");
-                }
-
-                await _flightService.DeleteFlightAsync(id);
-                return NoContent();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var existing = await _flightService.GetFlightByIdAsync(id);
+            if (existing == null)
+                return NotFound();
+            await _flightService.DeleteFlightAsync(id);
+            return NoContent();
         }
-    }
-
-    /// <summary>
-    /// Нислэгийн төлөв шинэчлэх хүсэлтийн загвар.
-    /// </summary>
-    public class UpdateFlightStatusDto
-    {
-        /// <summary>
-        /// Нислэгийн шинэ төлөв.
-        /// </summary>
-        [Required]
-        public FlightStatus Status { get; set; }
     }
 } 

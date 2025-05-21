@@ -68,11 +68,16 @@ namespace AirplaneTicket.WPF.Pages
         private async void btnAddPassenger_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new PassengerDialog(""); // Empty passport number for new passenger
-            if (dialog.ShowDialog() == true && dialog.Result != null)
+            if (dialog.ShowDialog() == true && dialog.Result != null && dialog.SelectedFlight != null)
             {
                 try
                 {
-                    await _airplaneService.CreatePassengerAsync(dialog.Result);
+                    // First create the passenger
+                    var createdPassenger = await _airplaneService.CreatePassengerAsync(dialog.Result);
+                    
+                    // Then register the passenger to the selected flight
+                    await _airplaneService.RegisterPassengerToFlightAsync(dialog.SelectedFlight.Id, createdPassenger.Id);
+                    
                     LoadPassengers();
                 }
                 catch (Exception ex)

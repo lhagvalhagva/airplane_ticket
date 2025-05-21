@@ -57,76 +57,83 @@ namespace DataAccess
                     DepartureTime = DateTime.Now.AddHours(5),
                     ArrivalTime = DateTime.Now.AddHours(9),
                     Status = FlightStatus.CheckingIn
+                },
+                new Flight
+                {
+                    FlightNumber = "MN404",
+                    DepartureCity = "Ulaanbaatar",
+                    ArrivalCity = "Moscow",
+                    DepartureTime = DateTime.Now.AddHours(4),
+                    ArrivalTime = DateTime.Now.AddHours(7),
+                    Status = FlightStatus.CheckingIn
+                },
+                new Flight
+                {
+                    FlightNumber = "MN505",
+                    DepartureCity = "Ulaanbaatar",
+                    ArrivalCity = "Berlin",
+                    DepartureTime = DateTime.Now.AddHours(6),
+                    ArrivalTime = DateTime.Now.AddHours(12),
+                    Status = FlightStatus.CheckingIn
+                },
+                new Flight
+                {
+                    FlightNumber = "MN606",
+                    DepartureCity = "Ulaanbaatar",
+                    ArrivalCity = "Istanbul",
+                    DepartureTime = DateTime.Now.AddHours(7),
+                    ArrivalTime = DateTime.Now.AddHours(11),
+                    Status = FlightStatus.CheckingIn
                 }
             };
 
             await context.Flights.AddRangeAsync(flights);
             await context.SaveChangesAsync();
 
-            var passengers = new List<Passenger>
-            {
-                new Passenger
-                {
-                    FirstName = "Bat",
-                    LastName = "Bold",
-                    PassportNumber = "AA123456",
-                    Email = "batbold@example.com",
-                    PhoneNumber = "+97699112233"
-                },
-                new Passenger
-                {
-                    FirstName = "Tsetseg",
-                    LastName = "Mungun",
-                    PassportNumber = "BB654321",
-                    Email = "tsetseg@example.com",
-                    PhoneNumber = "+97688223344"
-                },
-                new Passenger
-                {
-                    FirstName = "Suren",
-                    LastName = "Bayar",
-                    PassportNumber = "CC987654",
-                    Email = "suren@example.com",
-                    PhoneNumber = "+97677334455"
-                }
-            };
-
-            await context.Passengers.AddRangeAsync(passengers);
-            await context.SaveChangesAsync();
-
-            var flightPassengers = new List<FlightPassenger>
-            {
-                new FlightPassenger
-                {
-                    FlightId = flights[0].Id,
-                    PassengerId = passengers[0].Id,
-                    RegistrationDate = DateTime.Now.AddHours(-5)
-                },
-                new FlightPassenger
-                {
-                    FlightId = flights[0].Id,
-                    PassengerId = passengers[1].Id,
-                    RegistrationDate = DateTime.Now.AddHours(-4)
-                },
-                new FlightPassenger
-                {
-                    FlightId = flights[1].Id,
-                    PassengerId = passengers[2].Id,
-                    RegistrationDate = DateTime.Now.AddHours(-3)
-                }
-            };
-
-            await context.FlightPassengers.AddRangeAsync(flightPassengers);
-            await context.SaveChangesAsync();
-
+            // Register 8 passengers per flight, assign seats to about half
+            var random = new Random();
             var allSeats = new List<Seat>();
+            var allFlightPassengers = new List<FlightPassenger>();
+            int passengerCounter = 1;
             foreach (var flight in flights)
             {
+                var flightPassengers = new List<Passenger>();
+                for (int i = 0; i < 8; i++)
+                {
+                    var passenger = new Passenger
+                    {
+                        FirstName = $"TestFirst{passengerCounter}",
+                        LastName = $"TestLast{passengerCounter}",
+                        PassportNumber = $"P{flight.Id}{i:0000}",
+                        Email = $"test{passengerCounter}@example.com",
+                        PhoneNumber = $"+976{random.Next(10000000,99999999)}"
+                    };
+                    flightPassengers.Add(passenger);
+                    passengerCounter++;
+                }
+                await context.Passengers.AddRangeAsync(flightPassengers);
+                await context.SaveChangesAsync();
+
+                // Register all passengers to the flight
+                foreach (var p in flightPassengers)
+                {
+                    allFlightPassengers.Add(new FlightPassenger
+                    {
+                        FlightId = flight.Id,
+                        PassengerId = p.Id,
+                        RegistrationDate = DateTime.Now.AddMinutes(-random.Next(10, 300))
+                    });
+                }
+                await context.FlightPassengers.AddRangeAsync(allFlightPassengers);
+                await context.SaveChangesAsync();
+
+                // Create seats
+                var flightSeats = new List<Seat>();
                 for (int row = 1; row <= 6; row++)
                 {
                     foreach (var col in new[] { "A", "B", "C", "D", "E" })
                     {
-                        allSeats.Add(new Seat
+                        flightSeats.Add(new Seat
                         {
                             FlightId = flight.Id,
                             SeatNumber = $"{row}{col}",
@@ -134,31 +141,23 @@ namespace DataAccess
                         });
                     }
                 }
-            }
+                await context.Seats.AddRangeAsync(flightSeats);
+                await context.SaveChangesAsync();
 
-            await context.Seats.AddRangeAsync(allSeats);
-            await context.SaveChangesAsync();
+                // Assign seats to about half the passengers
+                var assignedPassengers = flightPassengers.OrderBy(x => random.Next()).Take(4).ToList();
+                var availableSeats = flightSeats.ToList();
+                for (int i = 0; i < assignedPassengers.Count; i++)
+                {
+                    var seat = availableSeats[i];
+                    var passenger = assignedPassengers[i];
+                    seat.IsOccupied = true;
+                    seat.PassengerId = passenger.Id;
+                    seat.CheckInTime = DateTime.Now.AddMinutes(-random.Next(1, 120));
 
-            // Суудлын заримыг захиалагдсан болгох
-            var seat1A = allSeats.FirstOrDefault(s => s.FlightId == flights[0].Id && s.SeatNumber == "1A");
-            var seat2B = allSeats.FirstOrDefault(s => s.FlightId == flights[0].Id && s.SeatNumber == "2B");
-            var seat3C = allSeats.FirstOrDefault(s => s.FlightId == flights[1].Id && s.SeatNumber == "3C");
-
-            if (seat1A != null && seat2B != null && seat3C != null)
-            {
-                // Суудлуудыг зорчигчтой холбох
-                seat1A.IsOccupied = true;
-                seat1A.PassengerId = passengers[0].Id;
-                seat1A.CheckInTime = DateTime.Now.AddHours(-1);
-                
-                seat2B.IsOccupied = true;
-                seat2B.PassengerId = passengers[1].Id;
-                seat2B.CheckInTime = DateTime.Now.AddMinutes(-30);
-
-                seat3C.IsOccupied = true;
-                seat3C.PassengerId = passengers[2].Id;
-                seat3C.CheckInTime = DateTime.Now.AddMinutes(-45);
-
+                    // Update passenger info to reflect seat assignment
+                    passenger.CheckedIn = true;
+                }
                 await context.SaveChangesAsync();
             }
         }

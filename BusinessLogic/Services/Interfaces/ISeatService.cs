@@ -62,5 +62,12 @@ namespace BusinessLogic.Services
         /// <param name="passengerId">Зорчигчийн ID</param>
         /// <returns>Зорчигчийн суудлын мэдээлэл, эсвэл null</returns>
         Task<Seat?> GetPassengerSeatAsync(int flightId, int passengerId);
+
+        /// <summary>
+        /// Add a new seat to the flight
+        /// </summary>
+        /// <param name="seat">The seat to add</param>
+        /// <returns>Task representing the asynchronous operation</returns>
+        Task AddSeatAsync(Seat seat);
     }
 }

@@ -49,11 +49,37 @@
 
                     <!-- Action Buttons -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
-                        <Button x:Name="btnRefresh" 
-                                Content="Шинэчлэх"
-                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                        <Button x:Name="btnAddFlight" 
+                                Content="Шинэ нислэг"
+                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                materialDesign:ButtonAssist.CornerRadius="4"
                                 Margin="0,0,8,0"
-                                Click="btnRefresh_Click"/>
+                                Click="btnAddFlight_Click">
+                            <Button.ContentTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="AirplanePlus" 
+                                                               Margin="0,0,8,0"/>
+                                        <TextBlock Text="Шинэ нислэг"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </Button.ContentTemplate>
+                        </Button>
+                        
+                        <Button x:Name="btnRefresh" 
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                materialDesign:ButtonAssist.CornerRadius="4"
+                                Click="btnRefresh_Click">
+                            <Button.ContentTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Refresh" 
+                                                               Margin="0,0,8,0"/>
+                                        <TextBlock Text="Шинэчлэх"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </Button.ContentTemplate>
+                        </Button>
                     </StackPanel>
                 </Grid>
 

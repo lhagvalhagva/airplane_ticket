@@ -1,6 +1,7 @@
 using DataAccess.Models;
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace RestApi.Models
 {
@@ -49,6 +50,7 @@ namespace RestApi.Models
         /// Нислэгийн төлөв
         /// </summary>
         [Required]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public FlightStatus Status { get; set; } = FlightStatus.CheckingIn;
     }
 }

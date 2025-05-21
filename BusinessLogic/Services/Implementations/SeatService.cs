@@ -179,5 +179,14 @@ namespace BusinessLogic.Services
             
             return seat;
         }
+
+        public async Task AddSeatAsync(Seat seat)
+        {
+            if (seat == null)
+                throw new ArgumentNullException(nameof(seat));
+
+            await _seatRepository.AddAsync(seat);
+            await _seatRepository.SaveChangesAsync();
+        }
     }
 }

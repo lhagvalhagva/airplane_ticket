@@ -57,7 +57,7 @@
                                         <Style.Resources>
                                             <VisualBrush x:Key="PlaceholderBrush" TileMode="None" Opacity="0.5" Stretch="None" AlignmentX="Left" AlignmentY="Center">
                                                 <VisualBrush.Visual>
-                                                    <TextBlock Text="Гарын үсгийн дугаар"/>
+                                                    <TextBlock Text="Паспортын дугаар"/>
                                                 </VisualBrush.Visual>
                                             </VisualBrush>
                                         </Style.Resources>
@@ -118,7 +118,7 @@
                                 <ListView.View>
                                     <GridView>
                                         <GridViewColumn Header="Нэр" DisplayMemberBinding="{Binding FullName}"/>
-                                        <GridViewColumn Header="Гарын үсгийн дугаар" DisplayMemberBinding="{Binding PassportNumber}"/>
+                                        <GridViewColumn Header="Паспортын дугаар" DisplayMemberBinding="{Binding PassportNumber}"/>
                                         <GridViewColumn Header="Суудал" DisplayMemberBinding="{Binding SeatNumber}"/>
                                     </GridView>
                                 </ListView.View>
@@ -140,6 +140,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
@@ -170,8 +171,20 @@
                         <!-- Grid will be populated in code-behind -->
                     </Grid>
 
+                    <!-- Submit Button -->
+                    <Button x:Name="SubmitButton" 
+                            Grid.Row="3"
+                            Content="Суудал оноох" 
+                            Height="40"
+                            Width="200"
+                            Margin="0,20,0,20"
+                            Background="#007BFF"
+                            Foreground="White"
+                            Click="SubmitButton_Click"
+                            IsEnabled="False"/>
+
                     <!-- Legend -->
-                    <StackPanel Grid.Row="3" 
+                    <StackPanel Grid.Row="4" 
                               Orientation="Horizontal" 
                               HorizontalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
@@ -182,12 +195,20 @@
                             <TextBlock Text="Чөлөөт" 
                                      VerticalAlignment="Center"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
                             <Border Width="20" 
                                     Height="20" 
                                     Background="#FFC107" 
                                     Margin="0,0,5,0"/>
                             <TextBlock Text="Сонгосон" 
+                                     VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="20" 
+                                    Height="20" 
+                                    Background="#DC3545" 
+                                    Margin="0,0,5,0"/>
+                            <TextBlock Text="Захиалагдсан" 
                                      VerticalAlignment="Center"/>
                         </StackPanel>
                     </StackPanel>

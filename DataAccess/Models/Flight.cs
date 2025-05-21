@@ -28,6 +28,9 @@ namespace DataAccess.Models
         
         [Required]
         public FlightStatus Status { get; set; } = FlightStatus.CheckingIn;
+
+        [Required]
+        public int AvailableSeats { get; set; }
         
         // Navigation properties
         [JsonIgnore]

@@ -35,20 +35,11 @@ namespace RestApi.Controllers
         /// <returns>Зорчигчдын жагсаалт</returns>
         /// <response code="200">Зорчигчдын жагсаалт амжилттай буцаагдсан</response>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Passenger>>> GetPassengers([FromQuery] string? name = null, [FromQuery] string? passport = null)
+        public async Task<ActionResult<IEnumerable<Passenger>>> GetPassengers()
         {
-            try
-            {
-                var passengers = await _passengerService.GetAllPassengersAsync(name, passport);
-                return Ok(passengers);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var passengers = await _passengerService.GetAllPassengersAsync();
+            return Ok(passengers);
         }
-
-
 
         /// <summary>
         /// Зорчигчийн ID-аар зорчигчийн мэдээлэл авах.
@@ -61,16 +52,10 @@ namespace RestApi.Controllers
         public async Task<ActionResult<Passenger>> GetPassenger(int id)
         {
             var passenger = await _passengerService.GetPassengerByIdAsync(id);
-
             if (passenger == null)
-            {
-                return NotFound($"Passenger with ID {id} not found.");
-            }
-
+                return NotFound();
             return Ok(passenger);
         }
-
-
 
         /// <summary>
         /// Шинэ зорчигч үүсгэх.
@@ -80,17 +65,10 @@ namespace RestApi.Controllers
         /// <response code="201">Зорчигч амжилттай үүсгэгдсэн</response>
         /// <response code="400">Зорчигчийн мэдээлэл буруу</response>
         [HttpPost]
-        public async Task<ActionResult<Passenger>> CreatePassenger(Passenger passenger)
+        public async Task<ActionResult<Passenger>> CreatePassenger([FromBody] Passenger passenger)
         {
-            try
-            {
-                await _passengerService.AddPassengerAsync(passenger);
-                return CreatedAtAction(nameof(GetPassenger), new { id = passenger.Id }, passenger);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            await _passengerService.AddPassengerAsync(passenger);
+            return CreatedAtAction(nameof(GetPassenger), new { id = passenger.Id }, passenger);
         }
 
         /// <summary>
@@ -103,27 +81,15 @@ namespace RestApi.Controllers
         /// <response code="400">Зорчигчийн мэдээлэл буруу</response>
         /// <response code="404">Зорчигч олдсонгүй</response>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdatePassenger(int id, Passenger passenger)
+        public async Task<IActionResult> UpdatePassenger(int id, [FromBody] Passenger passenger)
         {
             if (id != passenger.Id)
-            {
-                return BadRequest("Passenger ID in URL does not match ID in request body.");
-            }
-
-            try
-            {
-                if (!await _passengerService.PassengerExistsAsync(id))
-                {
-                    return NotFound($"Passenger with ID {id} not found.");
-                }
-
-                await _passengerService.UpdatePassengerAsync(passenger);
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+                return BadRequest();
+            var existing = await _passengerService.GetPassengerByIdAsync(id);
+            if (existing == null)
+                return NotFound();
+            await _passengerService.UpdatePassengerAsync(passenger);
+            return NoContent();
         }
 
         /// <summary>
@@ -137,27 +103,11 @@ namespace RestApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePassenger(int id)
         {
-            try
-            {
-                if (!await _passengerService.PassengerExistsAsync(id))
-                {
-                    return NotFound($"Зорчигч ID {id} олдсонгүй.");
-                }
-                await _passengerService.DeletePassengerAsync(id);
-                return NoContent();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var existing = await _passengerService.GetPassengerByIdAsync(id);
+            if (existing == null)
+                return NotFound();
+            await _passengerService.DeletePassengerAsync(id);
+            return NoContent();
         }
     }
 } 

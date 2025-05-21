@@ -26,9 +26,10 @@ namespace DataAccess
         {
             if (!optionsBuilder.IsConfigured)
             {
-                // DataAccess хавтас руу заах замыг гаргах
-                string dataAccessPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                string dbPath = Path.Combine(dataAccessPath, "airport.db");
+                // Get the path to the RestApi project directory
+                string baseDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                string restApiPath = Path.GetFullPath(Path.Combine(baseDirectory, "..", "..", "..", "..", "RestApi"));
+                string dbPath = Path.Combine(restApiPath, "airport.db");
                 optionsBuilder.UseSqlite($"Data Source={dbPath}");
             }
         }

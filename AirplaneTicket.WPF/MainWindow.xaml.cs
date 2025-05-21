@@ -34,5 +34,10 @@ namespace AirplaneTicket.WPF
                 }
             }
         }
+
+        private void ExitButton_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
     }
 } 

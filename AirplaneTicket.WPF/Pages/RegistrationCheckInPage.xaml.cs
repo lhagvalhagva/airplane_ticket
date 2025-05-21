@@ -28,6 +28,7 @@ namespace AirplaneTicket.WPF.Pages
         private Passenger? _selectedPassenger;
         private Seat? _selectedSeat;
         private List<Seat> seatList = new List<Seat>(); // Store all seats with occupancy info
+        private Button? _selectedSeatButton = null; // Track the currently selected seat button
 
         public RegistrationCheckInPage()
         {
@@ -256,9 +257,9 @@ namespace AirplaneTicket.WPF.Pages
         private async void SearchButton_Click(object sender, RoutedEventArgs e)
         {
             var passport = PassportNumberTextBox.Text.Trim();
-            if (string.IsNullOrEmpty(passport) || passport == "Гарын үсгийн дугаар")
+            if (string.IsNullOrEmpty(passport) || passport == "Паспортын дугаар")
             {
-                ShowToast("Гарын үсгийн дугаар оруулна уу", "error");
+                ShowToast("Паспортын дугаар оруулна уу", "error");
                 return;
             }
 
@@ -300,7 +301,7 @@ namespace AirplaneTicket.WPF.Pages
         private void DisplayPassengerInfo(Passenger passenger)
         {
             PassengerNameText.Text = $"{passenger.FirstName} {passenger.LastName}";
-            PassengerPassportText.Text = $"Гарын үсгийн дугаар: {passenger.PassportNumber}";
+            PassengerPassportText.Text = $"Паспортын дугаар: {passenger.PassportNumber}";
             PassengerContactText.Text = $"Утас: {passenger.PhoneNumber}";
         }
 
@@ -311,7 +312,7 @@ namespace AirplaneTicket.WPF.Pages
             PassengerContactText.Text = string.Empty;
         }
 
-        private async void SeatButton_Click(object sender, RoutedEventArgs e)
+        private void SeatButton_Click(object sender, RoutedEventArgs e)
         {
             if (currentPassenger == null)
             {
@@ -322,33 +323,63 @@ namespace AirplaneTicket.WPF.Pages
             if (sender is Button button)
             {
                 string seatNumber = button.Content.ToString();
-                if (!availableSeats.Contains(seatNumber))
+                var seat = seatList.FirstOrDefault(s => s.SeatNumber == seatNumber);
+                
+                if (seat == null || seat.IsOccupied)
                 {
                     ShowToast("Энэ суудал захиалагдсан байна.", "error");
                     return;
                 }
 
-                try
+                // Reset previously selected seat button
+                if (_selectedSeatButton != null)
                 {
-                    ShowLoading(true);
-                    // Update passenger's seat
-                    currentPassenger.SeatNumber = seatNumber;
-                    await _airplaneService.UpdatePassengerAsync(currentPassenger);
-                    
-                    // Update UI
-                    button.Background = Brushes.Yellow;
-                    ShowToast($"Суудал {seatNumber} {currentPassenger.FirstName} {currentPassenger.LastName} дээр оноогдлоо");
-                    await LoadAvailableSeatsAsync();
-                    UpdatePassengerList();
+                    _selectedSeatButton.Background = Brushes.Green;
                 }
-                catch (Exception ex)
+
+                // Update selected seat
+                _selectedSeatButton = button;
+                _selectedSeat = seat;
+                button.Background = Brushes.Yellow;
+                SubmitButton.IsEnabled = true;
+            }
+        }
+
+        private async void SubmitButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (currentPassenger == null || _selectedSeat == null)
+            {
+                ShowToast("Зорчигч болон суудал сонгоно уу.", "error");
+                return;
+            }
+
+            try
+            {
+                ShowLoading(true);
+                // Assign seat using the correct API
+                var success = await _airplaneService.AssignSeatAsync(currentFlightId, currentPassenger.Id, _selectedSeat.Id);
+                if (!success)
                 {
-                    ShowToast($"Суудал онооход алдаа гарлаа: {ex.Message}", "error");
+                    ShowToast("Суудал оноох үед алдаа гарлаа (API).", "error");
+                    return;
                 }
-                finally
-                {
-                    ShowLoading(false);
-                }
+
+                ShowToast($"Суудал {_selectedSeat.SeatNumber} {currentPassenger.FirstName} {currentPassenger.LastName} дээр оноогдлоо");
+                await LoadAvailableSeatsAsync();
+                UpdatePassengerList();
+
+                // Reset selection
+                _selectedSeatButton = null;
+                _selectedSeat = null;
+                SubmitButton.IsEnabled = false;
+            }
+            catch (Exception ex)
+            {
+                ShowToast($"Суудал онооход алдаа гарлаа: {ex.Message}", "error");
+            }
+            finally
+            {
+                ShowLoading(false);
             }
         }
 
