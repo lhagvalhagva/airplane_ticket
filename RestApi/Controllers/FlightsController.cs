@@ -1,6 +1,7 @@
 using BusinessLogic.Services;
 using DataAccess.Models;
 using Microsoft.AspNetCore.Mvc;
+using RestApi.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -84,17 +85,17 @@ namespace RestApi.Controllers
         /// Нислэгийн мэдээллийг шинэчлэх.
         /// </summary>
         /// <param name="id">Нислэгийн ID</param>
-        /// <param name="flight">Нислэгийн шинэчлэгдсэн мэдээлэл</param>
+        /// <param name="flightDto">Нислэгийн шинэчлэгдсэн мэдээлэл</param>
         /// <returns>Үйлдлийн үр дүн</returns>
         /// <response code="204">Нислэгийн мэдээлэл амжилттай шинэчлэгдсэн</response>
         /// <response code="404">Нислэг олдсонгүй</response>
         /// <response code="400">Нислэгийн мэдээлэл буруу</response>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateFlight(int id, [FromBody] Flight flight)
+        public async Task<IActionResult> UpdateFlight(int id, [FromBody] UpdateFlightDto flightDto)
         {
             try
             {
-                if (id != flight.Id)
+                if (id != flightDto.Id)
                 {
                     return BadRequest("Flight ID in URL does not match ID in request body.");
                 }
@@ -103,8 +104,24 @@ namespace RestApi.Controllers
                 {
                     return NotFound($"Flight with ID {id} not found.");
                 }
-
-                await _flightService.UpdateFlightAsync(flight);
+                
+                // DTO-г домэйн модел болгон хөрвүүлэх
+                var existingFlight = await _flightService.GetFlightByIdAsync(id);
+                if (existingFlight == null)
+                {
+                    return NotFound($"Flight with ID {id} not found.");
+                }
+                
+                // Зөвхөн шаардлагатай талбаруудын утгыг өөрчлөх
+                existingFlight.FlightNumber = flightDto.FlightNumber;
+                existingFlight.DepartureCity = flightDto.DepartureCity;
+                existingFlight.ArrivalCity = flightDto.ArrivalCity;
+                existingFlight.DepartureTime = flightDto.DepartureTime;
+                existingFlight.ArrivalTime = flightDto.ArrivalTime;
+                existingFlight.Status = flightDto.Status;
+                
+                // Шинэчлэгдсэн нислэгийг хадгалах
+                await _flightService.UpdateFlightAsync(existingFlight);
                 return NoContent();
             }
             catch (Exception ex)

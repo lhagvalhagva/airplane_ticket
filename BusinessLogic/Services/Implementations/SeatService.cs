@@ -16,7 +16,7 @@ namespace BusinessLogic.Services
         private readonly IRepository<FlightPassenger> _flightPassengerRepository;
         private readonly INotificationService _notificationService;
 
-        public SeatService(
+        public SeatService( 
             IRepository<Seat> seatRepository,
             IRepository<Flight> flightRepository, 
             IRepository<Passenger> passengerRepository,
@@ -79,22 +79,23 @@ namespace BusinessLogic.Services
             if (seat.IsOccupied)
                 throw new InvalidOperationException($"Суудал {seat.SeatNumber} аль хэдийн захиалагдсан байна.");
 
-            // Зорчигч өөр суудалд бүртгэгдсэн эсэхийг шалгах
             var existingSeats = await _seatRepository.FindAsync(
                 s => s.FlightId == flightId && s.PassengerId == passengerId);
             
             if (existingSeats.Any())
                 throw new InvalidOperationException($"Зорчигч ID {passengerId} нь нислэг ID {flightId} дээр өөр суудалд бүртгегдсэн байна.");
 
-            // Суудлыг захиалах
             seat.IsOccupied = true;
             seat.PassengerId = passengerId;
             seat.CheckInTime = DateTime.UtcNow;
 
+            passenger.CheckedIn = true;
+
             await _seatRepository.UpdateAsync(seat);
+            await _passengerRepository.UpdateAsync(passenger);
             await _seatRepository.SaveChangesAsync();
+            await _passengerRepository.SaveChangesAsync();
             
-            // Суудал оноогдсон тухай мэдэгдэл илгээх
             await _notificationService.NotifySeatAssignedAsync(flightId, seat.SeatNumber, passengerId);
 
             return true;
@@ -102,7 +103,6 @@ namespace BusinessLogic.Services
 
         public async Task<bool> ReleaseSeatAsync(int flightId, int seatId)
         {
-            // Нислэг, суудал бүгд байгаа эсэхийг шалгах
             var flight = await _flightRepository.GetByIdAsync(flightId);
             if (flight == null)
                 throw new KeyNotFoundException($"Нислэг ID {flightId} олдсонгүй.");
@@ -111,7 +111,6 @@ namespace BusinessLogic.Services
             if (seat == null)
                 throw new KeyNotFoundException($"Суудал ID {seatId} олдсонгүй.");
 
-            // Суудал нислэгт хамаарах эсэхийг шалгах
             if (seat.FlightId != flightId)
                 throw new InvalidOperationException($"Суудал ID {seatId} нь нислэг ID {flightId} дээр хамаарахгүй байна.");
 

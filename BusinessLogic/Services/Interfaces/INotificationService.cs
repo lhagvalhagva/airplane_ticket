@@ -31,7 +31,7 @@ namespace BusinessLogic.Services
         /// <param name="flightId">Нислэгийн ID</param>
         /// <param name="passengerId">Зорчигчийн ID</param>
         /// <returns>Үйлдлийн үр дүн</returns>
-        Task NotifyPassengerRegisteredAsync(int flightId, int passengerId);
+        // Task NotifyPassengerRegisteredAsync(int flightId, int passengerId);
         
         /// <summary>
         /// Зорчигч нислэгээс хасагдсан тухай мэдэгдэл илгээх.
@@ -39,6 +39,6 @@ namespace BusinessLogic.Services
         /// <param name="flightId">Нислэгийн ID</param>
         /// <param name="passengerId">Зорчигчийн ID</param>
         /// <returns>Үйлдлийн үр дүн</returns>
-        Task NotifyPassengerUnregisteredAsync(int flightId, int passengerId);
+        // Task NotifyPassengerUnregisteredAsync(int flightId, int passengerId);
     }
 }
