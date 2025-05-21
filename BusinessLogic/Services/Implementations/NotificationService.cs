@@ -46,18 +46,7 @@ namespace BusinessLogic.Services
             await Task.CompletedTask;
         }
         
-        // public async Task NotifyPassengerRegisteredAsync(int flightId, int passengerId)
-        // {
-        //     Console.WriteLine($"Зорчигч ID: {passengerId} нь нислэг ID: {flightId} дээр бүртгэгдлээ");
-            
-        //     await Task.CompletedTask;
-        // }
-        
-        // public async Task NotifyPassengerUnregisteredAsync(int flightId, int passengerId)
-        // {
-        //     Console.WriteLine($"Зорчигч ID: {passengerId} нь нислэг ID: {flightId} дээр хасагдлаа");
-            
-        //     await Task.CompletedTask;
-        // }
+        // public async Task NotifyPassengerRegisteredAsync(int flightId, int passengerId){     Console.WriteLine($"Зорчигч ID: {passengerId} нь нислэг ID: {flightId} дээр бүртгэгдлээ");     await Task.CompletedTask;}
+        // public async Task NotifyPassengerUnregisteredAsync(int flightId, int passengerId){     Console.WriteLine($"Зорчигч ID: {passengerId} нь нислэг ID: {flightId} дээр хасагдлаа");     await Task.CompletedTask;}
     }
 }

@@ -136,5 +136,33 @@ namespace RestApi.Controllers
             await _flightService.DeleteFlightAsync(id);
             return NoContent();
         }
+
+        /// <summary>
+        /// Нислэгийн төлөвийг шинэчлэх.
+        /// </summary>
+        /// <param name="id">Нислэгийн ID</param>
+        /// <param name="status">Нислэгийн шинэ төлөв</param>
+        /// <returns>Шинэчлэгдсэн төлөв</returns>
+        /// <response code="200">Нислэгийн төлөв амжилттай шинэчлэгдсэн</response>
+        /// <response code="404">Нислэг олдсонгүй</response>
+        [HttpPut("{id}/status")]
+        public async Task<ActionResult<FlightStatus>> UpdateFlightStatus(int id, [FromBody] FlightStatus status)
+        {
+            try
+            {
+                var flight = await _flightService.GetFlightByIdAsync(id);
+                if (flight == null)
+                    return NotFound($"Нислэг ID {id} олдсонгүй");
+
+                flight.Status = status;
+                await _flightService.UpdateFlightAsync(flight);
+
+                return Ok(status);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
-} 
+}

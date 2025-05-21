@@ -26,6 +26,7 @@ namespace AirplaneTicket.WPF.Pages
         private DispatcherTimer toastTimer;
         private Flight? _selectedFlight;
         private Passenger? _selectedPassenger;
+    private Passenger? _selectedSeatOwner; // Суудал эзэмшигч зорчигч
         private Seat? _selectedSeat;
         private List<Seat> seatList = new List<Seat>(); // Store all seats with occupancy info
         private Button? _selectedSeatButton = null; // Track the currently selected seat button
@@ -184,8 +185,8 @@ namespace AirplaneTicket.WPF.Pages
                         p.PassportNumber,
                         SeatNumber = GetSeatNumberForPassenger(p) ?? "Not assigned"
                     })
+                    .OrderByDescending(p => p.SeatNumber)
                     .ToList();
-                
                 PassengerList.ItemsSource = registeredPassengers;
             }
             catch (Exception ex)
@@ -348,8 +349,31 @@ namespace AirplaneTicket.WPF.Pages
                 string seatNumber = button.Content.ToString();
                 var seat = seatList.FirstOrDefault(s => s.SeatNumber == seatNumber);
                 
-                if (seat == null || seat.IsOccupied)
+                if (seat == null)
                 {
+                    ShowToast("Суудлын мэдээлэл олдсонгүй.", "error");
+                    return;
+                }
+
+                if (seat.IsOccupied)
+                {
+                    // Суудал эзэмшигч зорчигчийг олох
+                    var seatOwner = passengers.FirstOrDefault(p => seat.PassengerId == p.Id);
+                    if (seatOwner != null)
+                    {
+                        _selectedSeatOwner = seatOwner;
+                        ShowToast($"Энэ суудал {seatOwner.FirstName} {seatOwner.LastName} -д захиалагдсан. Өөр зорчигчид шилжүүлэхийн тулд шинэ зорчигч сонгоно уу.", "info");
+                        
+                        // Хэрэв сонгогдсон зорчигч байгаа бол, түүнд суудал шилжүүлэх боломжтой
+                        if (currentPassenger != null && currentPassenger.Id != seatOwner.Id)
+                        {
+                            TransferButton.Visibility = Visibility.Visible;
+                            TransferButton.Tag = new { OwnerId = seatOwner.Id, NewPassengerId = currentPassenger.Id, SeatId = seat.Id };
+                            TransferButtonInfo.Text = $"{seatOwner.FirstName} {seatOwner.LastName} -с {currentPassenger.FirstName} {currentPassenger.LastName} руу шилжүүлэх";
+                        }
+                        return;
+                    }
+                    
                     ShowToast("Энэ суудал захиалагдсан байна.", "error");
                     return;
                 }
@@ -365,6 +389,10 @@ namespace AirplaneTicket.WPF.Pages
                 _selectedSeat = seat;
                 button.Background = Brushes.Yellow;
                 SubmitButton.IsEnabled = true;
+                
+                TransferButton.Visibility = Visibility.Collapsed;
+                TransferButtonInfo.Text = string.Empty;
+                _selectedSeatOwner = null;
             }
         }
 
@@ -407,7 +435,99 @@ namespace AirplaneTicket.WPF.Pages
             }
         }
 
-        private async void FlightStatusComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void PassengerList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (PassengerList.SelectedItem != null)
+            {
+                var selectedPassenger = (dynamic)PassengerList.SelectedItem;
+                var passenger = passengers.FirstOrDefault(p => p.PassportNumber == selectedPassenger.PassportNumber);
+                if (passenger != null)
+                {
+                    // Шинэ зорчигч сонгох
+                    currentPassenger = passenger;
+                    DisplayPassengerInfo(passenger);
+
+                    // Хэрэв зорчигч суудалтай бол (_selectedSeatOwner) болон шинэ зорчигч сонгогдсон бол
+                    // суудлыг шилжүүлэх боломжтой болно
+                    string seatNumber = selectedPassenger.SeatNumber;
+                    if (seatNumber != "Not assigned" && _selectedSeatOwner != null &&
+                        _selectedSeatOwner.Id != passenger.Id)
+                    {
+                        TransferButton.Visibility = Visibility.Visible;
+                        TransferButton.Tag = new { OwnerId = _selectedSeatOwner.Id, NewPassengerId = passenger.Id };
+                        TransferButtonInfo.Text = $"{_selectedSeatOwner.FirstName} {_selectedSeatOwner.LastName} -с {passenger.FirstName} {passenger.LastName} руу шилжүүлэх";
+                    }
+                    else
+                    {
+                        TransferButton.Visibility = Visibility.Collapsed;
+                        TransferButtonInfo.Text = string.Empty;
+                    }
+                }
+            }
+        }
+
+        private async void TransferButton_Click(object sender, RoutedEventArgs e)
+{
+    try
+    {
+        // Шилжүүлэх зорчигчдын мэдээллийг TransferButton.Tag-с авах
+        var tagData = (dynamic)TransferButton.Tag;
+        int ownerId = tagData.OwnerId;
+        int newPassengerId = tagData.NewPassengerId;
+        int seatId = 0;
+        
+        // SeatId олж авах 
+        if (tagData.GetType().GetProperty("SeatId") != null)
+        {
+            seatId = tagData.SeatId;
+        }
+        else
+        {
+            // Одоо эзэмшигч зорчигчийн суудлыг олох шаардлагатай
+            var ownerSeats = await _airplaneService.GetPassengerSeatsAsync(currentFlightId, ownerId);
+            var seat = ownerSeats.FirstOrDefault();
+            if (seat == null)
+            {
+                ShowToast("Суудлын мэдээлэл олдсонгүй", "error");
+                return;
+            }
+            seatId = seat.Id;
+        }
+
+        ShowLoading(true);
+        
+        // Суудал шилжүүлэх API дуудах
+        var success = await _airplaneService.ReleaseSeatWithNewPassengerAsync(currentFlightId, seatId, newPassengerId);
+        
+        if (success)
+        {
+            ShowToast("Суудал амжилттай шилжүүллээ");
+            // Суудал, зорчигчдын мэдээллийг шинэчлэх
+            await LoadAvailableSeatsAsync();
+            await LoadPassengersAsync();
+            GenerateSeatMap();
+            
+            // Цэвэрлэх
+            TransferButton.Visibility = Visibility.Collapsed;
+            TransferButtonInfo.Text = string.Empty;
+            _selectedSeatOwner = null;
+        }
+        else
+        {
+            ShowToast("Суудал шилжүүлэх үед алдаа гарлаа", "error");
+        }
+    }
+    catch (Exception ex)
+    {
+        ShowToast($"Суудал шилжүүлэх үед алдаа гарлаа: {ex.Message}", "error");
+    }
+    finally
+    {
+        ShowLoading(false);
+    }
+}
+
+private async void FlightStatusComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (FlightStatusComboBox.SelectedItem is FlightStatus status)
             {
@@ -432,19 +552,5 @@ namespace AirplaneTicket.WPF.Pages
                 }
             }
         }
-
-        private void PassengerList_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (PassengerList.SelectedItem != null)
-            {
-                var selectedPassenger = (dynamic)PassengerList.SelectedItem;
-                var passenger = passengers.FirstOrDefault(p => p.PassportNumber == selectedPassenger.PassportNumber);
-                if (passenger != null)
-                {
-                    currentPassenger = passenger;
-                    DisplayPassengerInfo(passenger);
-                }
-            }
-        }
     }
-} 
+}

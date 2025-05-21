@@ -34,12 +34,13 @@ namespace BusinessLogic.Services
         Task<bool> AssignSeatAsync(int flightId, int passengerId, int seatId);
 
         /// <summary>
-        /// Суудлыг чөлөөлөх (захиалга цуцлах).
+        /// Суудлыг чөлөөлөх эсвэл өөр зорчигчид шилжүүлэх.
         /// </summary>
         /// <param name="flightId">Нислэгийн ID</param>
         /// <param name="seatId">Суудлын ID</param>
-        /// <returns>Суудал амжилттай чөлөөлөгдсөн эсэх</returns>
-        Task<bool> ReleaseSeatAsync(int flightId, int seatId);
+        /// <param name="newPassengerId">Шинэ зорчигчийн ID (заавал биш)</param>
+        /// <returns>Суудал амжилттай чөлөөлөгдсөн эсвэл шилжүүлэгдсэн эсэх</returns>
+        Task<bool> ReleaseSeatAsync(int flightId, int seatId, int? newPassengerId);
 
         /// <summary>
         /// Суудал байгаа эсэхийг шалгах.

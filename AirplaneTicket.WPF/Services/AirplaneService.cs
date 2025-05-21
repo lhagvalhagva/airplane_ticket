@@ -87,6 +87,12 @@ namespace AirplaneTicket.WPF.Services
             return response.IsSuccessStatusCode;
         }
 
+        public async Task<bool> ReleaseSeatWithNewPassengerAsync(int flightId, int seatId, int newPassengerId)
+        {
+            var response = await _httpClient.PutAsync($"{BaseUrl}/flights/{flightId}/seats/{seatId}/release?newPassengerId={newPassengerId}", null);
+            return response.IsSuccessStatusCode;
+        }
+
         public async Task<bool> ReserveSeatAsync(int flightId, string seatNumber)
         {
             var response = await _httpClient.PostAsJsonAsync($"{BaseUrl}/seats/reserve", new { FlightId = flightId, SeatNumber = seatNumber });

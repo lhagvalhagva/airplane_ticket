@@ -84,19 +84,21 @@ namespace RestApi.Controllers
         }
 
         /// <summary>
-        /// Суудлыг чөлөөлөх
+        /// Суудлыг чөлөөлөх эсвэл өөр зорчигчид оноох
         /// </summary>
         /// <param name="flightId">Нислэгийн ID</param>
         /// <param name="seatId">Суудлын ID</param>
+        /// <param name="newPassengerId">Шинэ зорчигчийн ID (заавал биш)</param>
         /// <returns>Амжилттай бол 200 OK</returns>
-        /// <response code="200">Суудал амжилттай чөлөөлөгдсөн</response>
-        /// <response code="404">Нислэг эсвэл суудал олдоогүй</response>
+        /// <response code="200">Суудал амжилттай чөлөөлөгдсөн эсвэл өөр зорчигчид оноогдсон</response>
+        /// <response code="404">Нислэг, суудал эсвэл зорчигч олдоогүй</response>
+        /// <response code="400">Суудал оноох боломжгүй</response>
         [HttpPut("{seatId}/release")]
-        public async Task<ActionResult> ReleaseSeat(int flightId, int seatId)
+        public async Task<ActionResult> ReleaseSeat(int flightId, int seatId, [FromQuery] int? newPassengerId = null)
         {
             try
             {
-                var result = await _seatService.ReleaseSeatAsync(flightId, seatId);
+                var result = await _seatService.ReleaseSeatAsync(flightId, seatId, newPassengerId);
                 return Ok(new { success = result });
             }
             catch (KeyNotFoundException ex)

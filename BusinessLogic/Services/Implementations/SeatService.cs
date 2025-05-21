@@ -101,7 +101,7 @@ namespace BusinessLogic.Services
             return true;
         }
 
-        public async Task<bool> ReleaseSeatAsync(int flightId, int seatId)
+        public async Task<bool> ReleaseSeatAsync(int flightId, int seatId, int? newPassengerId = null)
         {
             var flight = await _flightRepository.GetByIdAsync(flightId);
             if (flight == null)
@@ -114,24 +114,56 @@ namespace BusinessLogic.Services
             if (seat.FlightId != flightId)
                 throw new InvalidOperationException($"Суудал ID {seatId} нь нислэг ID {flightId} дээр хамаарахгүй байна.");
 
-            if (!seat.IsOccupied)
-                return true; 
-
             int? oldPassengerId = seat.PassengerId;
             string seatNumber = seat.SeatNumber;
 
-            seat.IsOccupied = false;
-            seat.PassengerId = null;
-            seat.CheckInTime = null;
+            if (newPassengerId.HasValue)
+            {
+
+                var passenger = await _passengerRepository.GetByIdAsync(newPassengerId.Value);
+                if (passenger == null)
+                    throw new KeyNotFoundException($"Зорчигч ID {newPassengerId.Value} олдсонгүй.");
+
+                var flightPassengers = await _flightPassengerRepository.FindAsync(fp => fp.FlightId == flightId && fp.PassengerId == newPassengerId.Value);
+                var flightPassenger = flightPassengers.FirstOrDefault();
+                if (flightPassenger == null)
+                    throw new InvalidOperationException($"Зорчигч ID {newPassengerId.Value} нь нислэг ID {flightId} дээр бүртгэлгүй байна.");
+
+                var seats = await _seatRepository.FindAsync(s => s.FlightId == flightId && s.PassengerId == newPassengerId.Value);
+                var otherSeat = seats.FirstOrDefault();
+                if (otherSeat != null && otherSeat.Id != seatId)
+                {
+                    otherSeat.IsOccupied = false;
+                    otherSeat.PassengerId = null;
+                    otherSeat.CheckInTime = null;
+                    await _seatRepository.UpdateAsync(otherSeat);
+                }
+
+                seat.IsOccupied = true;
+                seat.PassengerId = newPassengerId;
+                seat.CheckInTime = DateTime.UtcNow;
+            }
+            else
+            {
+               
+                if (!seat.IsOccupied)
+                    return true;
+
+                seat.IsOccupied = false;
+                seat.PassengerId = null;
+                seat.CheckInTime = null;
+            }
 
             await _seatRepository.UpdateAsync(seat);
             await _seatRepository.SaveChangesAsync();
             
-            // Хэрэв хуучин зорчигч мэдээлэл байвал мэдэгдлийг илгээх
             if (oldPassengerId.HasValue)
             {
-                // Суудал чөлөөлсөн тухай мэдэгдлийг шууд илгээж болох боловч энд хийхгүй байна
-                Console.WriteLine($"Суудал {seatNumber} нь нислэг ID {flightId} дээр чөлөөлөгдлөө");
+                Console.WriteLine($"Суудал {seatNumber} нь нислэг ID {flightId} дээр өөрчлөгдлөө");
+                if (newPassengerId.HasValue)
+                    Console.WriteLine($"Зорчигч ID {newPassengerId.Value} нь нислэг ID {flightId} дээр {seatNumber} суудалд суулаа");
+                else
+                    Console.WriteLine($"Суудал {seatNumber} нь нислэг ID {flightId} дээр чөлөөлөгдлөө");
             }
 
             return true;

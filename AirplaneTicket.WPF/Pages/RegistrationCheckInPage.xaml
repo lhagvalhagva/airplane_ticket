@@ -171,17 +171,43 @@
                         <!-- Grid will be populated in code-behind -->
                     </Grid>
 
-                    <!-- Submit Button -->
-                    <Button x:Name="SubmitButton" 
-                            Grid.Row="3"
-                            Content="Суудал оноох" 
-                            Height="40"
-                            Width="200"
-                            Margin="0,20,0,20"
-                            Background="#007BFF"
-                            Foreground="White"
-                            Click="SubmitButton_Click"
-                            IsEnabled="False"/>
+                    <!-- Action Buttons Row -->
+                    <Grid Grid.Row="3" Margin="0,20,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <!-- Submit Button -->
+                        <Button x:Name="SubmitButton" 
+                                Grid.Column="0"
+                                Content="Суудал оноох" 
+                                Height="40"
+                                Width="200"
+                                Margin="0,0,5,0"
+                                Background="#007BFF"
+                                Foreground="White"
+                                Click="SubmitButton_Click"
+                                IsEnabled="False"/>
+                                
+                        <!-- Transfer Button -->
+                        <StackPanel Grid.Column="1">
+                            <Button x:Name="TransferButton" 
+                                    Content="Суудал шилжүүлэх" 
+                                    Height="40"
+                                    Width="200"
+                                    Margin="5,0,0,5"
+                                    Background="#FFA500"
+                                    Foreground="White"
+                                    Click="TransferButton_Click"
+                                    Visibility="Collapsed"/>
+                            <TextBlock x:Name="TransferButtonInfo"
+                                       TextWrapping="Wrap"
+                                       FontSize="11"
+                                       Foreground="#555555"
+                                       Margin="5,0,0,0"/>
+                        </StackPanel>
+                    </Grid>
 
                     <!-- Legend -->
                     <StackPanel Grid.Row="4" 
