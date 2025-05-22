@@ -46,7 +46,7 @@ builder.Services.AddScoped<ISeatService, SeatService>();
 builder.Services.AddScoped<IFlightPassengerService, FlightPassengerService>();
 
 // Add SignalR service
-builder.Services.AddSignalR();
+// builder.Services.AddSignalR();
 
 // Add Response Compression Middleware
 builder.Services.AddResponseCompression(opts =>
@@ -73,7 +73,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Configure SignalR hub endpoint
 app.MapHub<FlightHub>("/flighthub");
 
 app.Run();

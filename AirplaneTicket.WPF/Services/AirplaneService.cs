@@ -21,37 +21,37 @@ namespace AirplaneTicket.WPF.Services
         #region Flight Operations
         public async Task<List<Flight>> GetFlightsAsync()
         {
-            return await _httpClient.GetFromJsonAsync<List<Flight>>($"{BaseUrl}/flights");
+            return await _httpClient.GetFromJsonAsync<List<Flight>>($"{BaseUrl}/Flights");
         }
 
         public async Task<Flight> GetFlightAsync(int id)
         {
-            return await _httpClient.GetFromJsonAsync<Flight>($"{BaseUrl}/flights/{id}");
+            return await _httpClient.GetFromJsonAsync<Flight>($"{BaseUrl}/Flights/{id}");
         }
 
         public async Task<Flight> CreateFlightAsync(Flight flight)
         {
-            var response = await _httpClient.PostAsJsonAsync($"{BaseUrl}/flights", flight);
+            var response = await _httpClient.PostAsJsonAsync($"{BaseUrl}/Flights", flight);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<Flight>();
         }
 
         public async Task<Flight> UpdateFlightAsync(Flight flight)
         {
-            var response = await _httpClient.PutAsJsonAsync($"{BaseUrl}/flights/{flight.Id}", flight);
+            var response = await _httpClient.PutAsJsonAsync($"{BaseUrl}/Flights/{flight.Id}", flight);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<Flight>();
         }
 
         public async Task DeleteFlightAsync(int id)
         {
-            var response = await _httpClient.DeleteAsync($"{BaseUrl}/flights/{id}");
+            var response = await _httpClient.DeleteAsync($"{BaseUrl}/Flights/{id}");
             response.EnsureSuccessStatusCode();
         }
 
         public async Task<FlightStatus> UpdateFlightStatusAsync(int flightId, FlightStatus status)
         {
-            var response = await _httpClient.PutAsJsonAsync($"{BaseUrl}/flights/{flightId}/status", status);
+            var response = await _httpClient.PutAsJsonAsync($"{BaseUrl}/Flights/{flightId}/status", status);
             if (response.IsSuccessStatusCode)
             {
                 return await response.Content.ReadFromJsonAsync<FlightStatus>();
@@ -63,17 +63,17 @@ namespace AirplaneTicket.WPF.Services
         #region Seat Operations
         public async Task<IEnumerable<Seat>> GetFlightSeatsAsync(int flightId)
         {
-            return await _httpClient.GetFromJsonAsync<IEnumerable<Seat>>($"{BaseUrl}/flights/{flightId}/seats");
+            return await _httpClient.GetFromJsonAsync<IEnumerable<Seat>>($"{BaseUrl}/Flights/{flightId}/seats");
         }
 
         public async Task<IEnumerable<Seat>> GetAvailableSeatsAsync(int flightId)
         {
-            return await _httpClient.GetFromJsonAsync<IEnumerable<Seat>>($"{BaseUrl}/flights/{flightId}/seats/available");
+            return await _httpClient.GetFromJsonAsync<IEnumerable<Seat>>($"{BaseUrl}/Flights/{flightId}/seats/available");
         }
 
         public async Task<bool> AssignSeatAsync(int flightId, int passengerId, int seatId)
         {
-            var response = await _httpClient.PostAsJsonAsync($"{BaseUrl}/flights/{flightId}/seats/assign", new
+            var response = await _httpClient.PostAsJsonAsync($"{BaseUrl}/Flights/{flightId}/seats/assign", new
             {
                 PassengerId = passengerId,
                 SeatId = seatId
@@ -85,7 +85,7 @@ namespace AirplaneTicket.WPF.Services
             try
             {
                 // 1. Одоогийн суудлыг чөлөөлөх
-                var releaseResponse = await _httpClient.PutAsync($"{BaseUrl}/flights/{flightId}/seats/{seatId}/release", null);
+                var releaseResponse = await _httpClient.PutAsync($"{BaseUrl}/Flights/{flightId}/seats/{seatId}/release", null);
                 if (!releaseResponse.IsSuccessStatusCode)
                     return false;
                 
@@ -119,14 +119,14 @@ namespace AirplaneTicket.WPF.Services
 
         public async Task<IEnumerable<Seat>> GetPassengerSeatsAsync(int flightId, int passengerId)
         {
-            return await _httpClient.GetFromJsonAsync<IEnumerable<Seat>>($"{BaseUrl}/flights/{flightId}/seats/passenger/{passengerId}");
+            return await _httpClient.GetFromJsonAsync<IEnumerable<Seat>>($"{BaseUrl}/Flights/{flightId}/seats/passenger/{passengerId}");
         }
         #endregion
 
         #region Passenger Operations
         public async Task<List<Passenger>> GetPassengersAsync()
         {
-            return await _httpClient.GetFromJsonAsync<List<Passenger>>($"{BaseUrl}/passengers");
+            return await _httpClient.GetFromJsonAsync<List<Passenger>>($"{BaseUrl}/Passengers");
         }
 
         public async Task<List<BoardingPass>> GetBoardingPassesAsync()
@@ -136,7 +136,7 @@ namespace AirplaneTicket.WPF.Services
 
         public async Task<List<Passenger>> GetPassengersByFlightAsync(int flightId)
         {
-            return await _httpClient.GetFromJsonAsync<List<Passenger>>($"{BaseUrl}/flights/{flightId}/passengers");
+            return await _httpClient.GetFromJsonAsync<List<Passenger>>($"{BaseUrl}/Flights/{flightId}/passengers");
         }
 
         public async Task<Passenger> GetPassengerAsync(int id)
@@ -146,7 +146,7 @@ namespace AirplaneTicket.WPF.Services
 
         public async Task<Passenger> CreatePassengerAsync(Passenger passenger)
         {
-            var response = await _httpClient.PostAsJsonAsync($"{BaseUrl}/passengers", passenger);
+            var response = await _httpClient.PostAsJsonAsync($"{BaseUrl}/Passengers", passenger);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<Passenger>();
         }
@@ -168,14 +168,14 @@ namespace AirplaneTicket.WPF.Services
         #region Flight Passenger Operations
         public async Task<FlightPassenger> RegisterPassengerToFlightAsync(int flightId, int passengerId)
         {
-            var response = await _httpClient.PostAsJsonAsync($"{BaseUrl}/flights/{flightId}/passengers", new { PassengerId = passengerId });
+            var response = await _httpClient.PostAsJsonAsync($"{BaseUrl}/Flights/{flightId}/passengers", new { PassengerId = passengerId });
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<FlightPassenger>();
         }
 
         public async Task RemovePassengerFromFlightAsync(int flightId, int passengerId)
         {
-            var response = await _httpClient.DeleteAsync($"{BaseUrl}/flights/{flightId}/passengers/{passengerId}");
+            var response = await _httpClient.DeleteAsync($"{BaseUrl}/Flights/{flightId}/passengers/{passengerId}");
             response.EnsureSuccessStatusCode();
         }
         #endregion

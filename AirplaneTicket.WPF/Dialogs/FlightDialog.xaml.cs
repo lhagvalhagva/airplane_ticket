@@ -59,7 +59,8 @@ namespace AirplaneTicket.WPF.Dialogs
                     DepartureTime = departureDateTime,
                     ArrivalTime = arrivalDateTime,
                     AvailableSeats = int.Parse(TotalSeatsTextBox.Text),
-                    Status = (FlightStatus)Enum.Parse(typeof(FlightStatus), ((ComboBoxItem)StatusComboBox.SelectedItem).Tag.ToString())
+                    Status = (FlightStatus)Enum.Parse(typeof(FlightStatus), ((ComboBoxItem)StatusComboBox.SelectedItem).Tag.ToString()),
+                    Price = _existingFlight?.Price ?? 1000 // Нислэгийн үнийн анхны утга
                 };
 
                 DialogResult = true;
