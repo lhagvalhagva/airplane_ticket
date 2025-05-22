@@ -9,6 +9,9 @@ using RestApi.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Set text encoding for Mongolian characters
+System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

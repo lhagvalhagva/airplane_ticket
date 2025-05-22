@@ -26,12 +26,20 @@ namespace BusinessLogic.Services
             // Register for connection events
             _hubConnection.Closed += async (error) => {
                 Console.WriteLine($"SignalR connection closed: {error?.Message}");
-                await Task.Delay(new Random().Next(0, 5) * 1000); // Random delay before reconnecting
+                await Task.Delay(new Random().Next(0, 5) * 1000);
                 await EnsureConnectedAsync();
             };
             
-            // Open connection asynchronously
-            EnsureConnectedAsync().Wait();
+            // Open connection asynchronously - avoid blocking with Wait()
+            Task.Run(async () => {
+                try {
+                    await EnsureConnectedAsync();
+                    Console.WriteLine("Initial SignalR connection established asynchronously");
+                }
+                catch (Exception ex) {
+                    Console.WriteLine($"Initial SignalR connection failed: {ex.Message}");
+                }
+            });
         }
         
         private async Task<bool> EnsureConnectedAsync()
@@ -41,8 +49,12 @@ namespace BusinessLogic.Services
                 if (_hubConnection.State != HubConnectionState.Connected)
                 {
                     Console.WriteLine($"Connecting to SignalR Hub (current state: {_hubConnection.State})...");
-                    await _hubConnection.StartAsync();
-                    Console.WriteLine("Successfully connected to SignalR Hub");
+                    
+                    // Set a timeout for connection attempt
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                    await _hubConnection.StartAsync(cts.Token);
+                    
+                    Console.WriteLine($"Successfully connected to SignalR Hub (ID: {_hubConnection.ConnectionId})");
                     return true;
                 }
                 return true;
@@ -50,6 +62,8 @@ namespace BusinessLogic.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"Error connecting to SignalR Hub: {ex.Message}");
+                Console.WriteLine($"Exception type: {ex.GetType().Name}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return false;
             }
         }
@@ -57,12 +71,13 @@ namespace BusinessLogic.Services
         public async Task NotifyFlightStatusChangedAsync(int flightId, FlightStatus newStatus)
         {
             Console.WriteLine($"========== SENDING NOTIFICATION ===========");
-            Console.WriteLine($"Flight ID: {flightId}, status changed to {newStatus}");
+            Console.WriteLine($"Flight ID: {flightId}, status changed to {newStatus} (value: {(int)newStatus})");
             
             // Create notification data with timestamp
             var notificationData = new {
                 FlightId = flightId,
                 NewStatus = newStatus,
+                NewStatusValue = (int)newStatus,
                 Timestamp = DateTime.Now
             };
 
@@ -77,7 +92,7 @@ namespace BusinessLogic.Services
                     // Call NotifyFlightStatusChanged method on the hub
                     Console.WriteLine($"Preparing to send via SignalR: {JsonSerializer.Serialize(notificationData)}");
                     Console.WriteLine($"Hub method name: NotifyFlightStatusChanged");
-                    Console.WriteLine($"Parameters: [{flightId}, {newStatus}]");
+                    Console.WriteLine($"Parameters: [{flightId}, {newStatus}] (value: {(int)newStatus})");
                     
                     // Try multiple times if needed
                     for (int attempt = 1; attempt <= 3; attempt++)
@@ -85,13 +100,16 @@ namespace BusinessLogic.Services
                         try
                         {
                             Console.WriteLine($"Sending attempt {attempt}/3...");
-                            // Important: Make sure parameter order and types match the Hub method
+                            
+                            // Send directly to ReceiveFlightStatusUpdate for more reliable delivery
+                            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
                             await _hubConnection.InvokeAsync(
-                                "NotifyFlightStatusChanged",
+                                "ReceiveFlightStatusUpdate",
                                 flightId,
-                                newStatus);
+                                newStatus,
+                                cts.Token);
                                 
-                            Console.WriteLine($"SUCCESS: Notification sent to SignalR hub");
+                            Console.WriteLine($"SUCCESS: Direct notification sent");
                             break; // Success, exit retry loop
                         }
                         catch (Exception sendEx) when (attempt < 3)

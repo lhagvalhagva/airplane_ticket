@@ -86,9 +86,17 @@ else
                 .WithAutomaticReconnect(new[] { TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(5) })
                 .Build();
             
+            Console.WriteLine($"Created SignalR connection to {hubConnection.ConnectionId ?? "not connected"}");
+            
             // Нислэгийн төлөв өөрчлөгдсөн тухай мэдэгдэл хүлээн авах
-            hubConnection.On<int, DataAccess.Models.FlightStatus>("ReceiveFlightStatusUpdate", HandleFlightStatusUpdate);
-            Console.WriteLine("Registered ReceiveFlightStatusUpdate handler");
+            try {
+                // Direct registration - simplified to minimize potential issues
+                hubConnection.On<int, FlightStatus>("ReceiveFlightStatusUpdate", HandleStatusUpdateDirectly);
+                Console.WriteLine("Successfully registered ReceiveFlightStatusUpdate handler");
+            }
+            catch (Exception ex) {
+                Console.WriteLine($"Error registering SignalR event handler: {ex.Message}");
+            }
             
             // Add reconnection event handlers
             hubConnection.Closed += async (error) => {
@@ -112,17 +120,38 @@ else
         }
     }
 
+    // Simplified direct handler for status updates
+    private async Task HandleStatusUpdateDirectly(int flightId, FlightStatus newStatus)
+    {
+        Console.WriteLine($"[DIRECT HANDLER] Received status update: Flight={flightId}, Status={newStatus} ({(int)newStatus})");
+        await HandleFlightStatusUpdate(flightId, newStatus);
+    }
+
     // Connect to SignalR hub
     private async Task ConnectToSignalR()
     {
         try {
+            if (hubConnection == null) {
+                Console.WriteLine("Error: SignalR hub connection is null");
+                return;
+            }
+            
             if (hubConnection.State != HubConnectionState.Connected) {
+                Console.WriteLine($"Connecting to SignalR hub (current state: {hubConnection.State})...");
                 await hubConnection.StartAsync();
-                Console.WriteLine("Successfully connected to SignalR hub");
+                Console.WriteLine($"Successfully connected to SignalR hub. Connection ID: {hubConnection.ConnectionId}");
+            }
+            else {
+                Console.WriteLine($"Already connected to SignalR hub. Connection ID: {hubConnection.ConnectionId}");
             }
         }
         catch (Exception ex) {
             Console.WriteLine($"Error connecting to SignalR hub: {ex.Message}");
+            Console.WriteLine(ex.ToString());
+            
+            // Schedule retry after delay
+            await Task.Delay(3000);
+            await ConnectToSignalR();
         }
     }
 
@@ -152,7 +181,7 @@ else
                 
                 foreach (var flight in flights)
                 {
-                    Console.WriteLine($"Flight: {flight.FlightNumber}, Time: {flight.Time}, Destination: {flight.Destination}, Gate: {flight.Gate}, Status: {flight.StatusText}");
+                    Console.WriteLine($"Flight: {flight.FlightNumber}, Time: {flight.Time}, Destination: {flight.Destination}, Gate: {flight.Gate}, Status: {flight.StatusText} (raw={flight.Status})");
                 }
                 
                 Console.WriteLine($"Loaded {flights.Count} flights successfully");
@@ -169,17 +198,15 @@ else
         {
             isLoading = false;
         }
-
-
     }
 
     private string GetStatusClass(string status) => status switch
     {
-        "Бүртгэж байна" => "status-checkin",
-        "Онгоцонд сууж байна" => "status-boarding",
-        "Ниссэн" => "status-departed",
-        "Хойшилсон" => "status-delayed",
-        "Цуцалсан" => "status-cancelled",
+        "Burtgej baina" => "status-checkin",
+        "Ongotsond suulgaj baina" => "status-boarding",
+        "Hooson" => "status-departed",
+        "Hoishlogdson" => "status-delayed",
+        "Tsutslasan" => "status-cancelled",
         _ => ""
     };
     
@@ -188,34 +215,81 @@ else
     {
         try
         {
-            Console.WriteLine($"Received flight status update notification: ID={flightId}, Status={newStatus}");
+            Console.WriteLine($"Handling flight status update notification: ID={flightId}, Status={newStatus} ({(int)newStatus})");
             
             // Find and update flight status
             var flight = flights.FirstOrDefault(f => f.Id == flightId);
             if (flight != null)
             {
+                Console.WriteLine($"Found flight in list: {flight.FlightNumber}, current status={flight.Status} (StatusText={flight.StatusText})");
+                
                 // Store previous status for visual effect
                 var oldStatus = flight.Status;
-                flight.Status = (int)newStatus;
                 
-                Console.WriteLine($"Төлөв өөрчлөгдсөн: {flight.FlightNumber}, хуучин төлөв={flight.StatusText}, шинэ төлөв={((DataAccess.Models.FlightStatus)newStatus)}");
+                // Create a completely new flight list to force UI refresh
+                var newFlights = new List<FlightInfoModel>();
                 
-                // Update UI
+                // Copy all flights, updating only the one that changed
+                foreach (var f in flights)
+                {
+                    if (f.Id == flightId)
+                    {
+                        // Create new flight with updated status
+                        newFlights.Add(new FlightInfoModel
+                        {
+                            Id = f.Id,
+                            FlightNumber = f.FlightNumber,
+                            DepartureCity = f.DepartureCity,
+                            ArrivalCity = f.ArrivalCity,
+                            DepartureTime = f.DepartureTime,
+                            ArrivalTime = f.ArrivalTime,
+                            Status = (int)newStatus
+                        });
+                        
+                        Console.WriteLine($"Updated flight: {f.FlightNumber}, new status={newStatus}");
+                    }
+                    else
+                    {
+                        // Keep unchanged flights
+                        newFlights.Add(f);
+                    }
+                }
+                
+                // Replace entire flights collection
+                flights = newFlights;
+                
+                // Debug each flight's status text
+                foreach (var f in flights)
+                {
+                    Console.WriteLine($"DEBUG: Flight {f.FlightNumber} status={f.Status}, StatusText='{f.StatusText}'");
+                }
+                
+                Console.WriteLine($"Flight status changed: {flight.FlightNumber}, old={((DataAccess.Models.FlightStatus)oldStatus)}, new={newStatus}");
+                
+                // Force immediate UI update
                 await InvokeAsync(() => {
-                    StateHasChanged();
-                    Console.WriteLine($"Дэлгэц шинэчлэгдсэн: {flight.FlightNumber}, шинэ төлөв={flight.StatusText}");
+                    try {
+                        StateHasChanged();
+                        Console.WriteLine($"UI updated with StateHasChanged");
+                    }
+                    catch (Exception uiEx) {
+                        Console.WriteLine($"Error updating UI: {uiEx.Message}");
+                    }
                 });
+                
+                Console.WriteLine($"Display updated: {flight.FlightNumber}, new status={flights.First(f => f.Id == flightId).StatusText}");
             }
             else
             {
-                Console.WriteLine($"Нислэг олдсонгүй ID={flightId}");
-                // Consider refreshing all flights if flight is not found
+                Console.WriteLine($"Flight not found ID={flightId}, attempting to reload flights");
+                // Refresh all flights if flight is not found
                 await LoadFlightsFromApi();
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Төлөв шинэчлэх үед алдаа гарлаа: {ex.Message}");
+            Console.WriteLine($"Error updating status: {ex.Message}");
+            Console.WriteLine(ex.ToString());
         }
     }
     // Dispose SignalR connection when component is disposed

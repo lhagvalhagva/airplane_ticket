@@ -22,12 +22,12 @@ namespace BlazorClient.Components
         
         private string GetStatusText(int status) => ((FlightStatus)status) switch
         {
-            FlightStatus.CheckingIn => "Бүртгэж байна",
-            FlightStatus.Boarding => "Онгоцонд сууж байна",
-            FlightStatus.Departed => "Ниссэн",
-            FlightStatus.Delayed => "Хойшилсон",
-            FlightStatus.Cancelled => "Цуцалсан",
-            _ => "Тодорхойгүй"
+            FlightStatus.CheckingIn => "Burtgej baina",
+            FlightStatus.Boarding => "Ongotsond suulgaj baina",
+            FlightStatus.Departed => "Hooson",
+            FlightStatus.Delayed => "Hoishlogdson",
+            FlightStatus.Cancelled => "Tsutslasan",
+            _ => "Todorhoigui"
         };
     }
 }

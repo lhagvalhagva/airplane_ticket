@@ -6,6 +6,9 @@ using RestApi.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Set text encoding for Mongolian characters
+System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -24,7 +27,7 @@ builder.Services.AddScoped(sp =>
 builder.Services.AddSingleton<Func<HubConnection>>(sp => () => 
 {
     return new HubConnectionBuilder()
-        .WithUrl("http://localhost:5027/flightHub")
+        .WithUrl("http://localhost:5027/flighthub")
         .WithAutomaticReconnect()
         .Build();
 });
@@ -55,7 +58,7 @@ app.UseCors(cors => cors
 );
 
 // Configure SignalR Hub endpoint
-app.MapHub<FlightHub>("/flightHub");
+app.MapHub<FlightHub>("/flighthub");
 
 // Map Razor components
 app.MapRazorComponents<App>()
