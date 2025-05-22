@@ -28,8 +28,10 @@ namespace AirplaneTicket.WPF.Pages
         private Passenger? _selectedPassenger;
     private Passenger? _selectedSeatOwner; // Суудал эзэмшигч зорчигч
         private Seat? _selectedSeat;
+        private Seat? _selectedNewSeat; // Суудал солиход шинээр сонгогдсон суудал
         private List<Seat> seatList = new List<Seat>(); // Store all seats with occupancy info
         private Button? _selectedSeatButton = null; // Track the currently selected seat button
+        private Button? _selectedNewSeatButton = null; // Track the new seat button for swapping
 
         public RegistrationCheckInPage()
         {
@@ -357,19 +359,29 @@ namespace AirplaneTicket.WPF.Pages
 
                 if (seat.IsOccupied)
                 {
-                    // Суудал эзэмшигч зорчигчийг олох
+                    // Эзэмшигдсэн суудлыг сонгох үед
                     var seatOwner = passengers.FirstOrDefault(p => seat.PassengerId == p.Id);
                     if (seatOwner != null)
                     {
                         _selectedSeatOwner = seatOwner;
-                        ShowToast($"Энэ суудал {seatOwner.FirstName} {seatOwner.LastName} -д захиалагдсан. Өөр зорчигчид шилжүүлэхийн тулд шинэ зорчигч сонгоно уу.", "info");
+                        _selectedSeat = seat;
                         
-                        // Хэрэв сонгогдсон зорчигч байгаа бол, түүнд суудал шилжүүлэх боломжтой
-                        if (currentPassenger != null && currentPassenger.Id != seatOwner.Id)
+                        if (_selectedSeatButton != null)
                         {
-                            TransferButton.Visibility = Visibility.Visible;
-                            TransferButton.Tag = new { OwnerId = seatOwner.Id, NewPassengerId = currentPassenger.Id, SeatId = seat.Id };
-                            TransferButtonInfo.Text = $"{seatOwner.FirstName} {seatOwner.LastName} -с {currentPassenger.FirstName} {currentPassenger.LastName} руу шилжүүлэх";
+                            // Өмнө сонгогдсон суудлын өнгийг буцаах
+                            var prevSeat = seatList.FirstOrDefault(s => s.SeatNumber == _selectedSeatButton.Content.ToString());
+                            _selectedSeatButton.Background = prevSeat != null && prevSeat.IsOccupied ? Brushes.Red : Brushes.Green;
+                        }
+                        
+                        _selectedSeatButton = button;
+                        button.Background = Brushes.Purple; // Сонгогдсон эзэмшигдсэн суудлыг ялгах өнгө
+                        
+                        ShowToast($"Суудал {seatNumber} ({seatOwner.FirstName} {seatOwner.LastName})-д захиалагдсан. Сул суудал сонгож солино уу.", "info");
+                        
+                        // Хэрэв өмнө чөлөөт суудал сонгогдсон бол суудал солих боломжтой
+                        if (_selectedNewSeat != null && !_selectedNewSeat.IsOccupied)
+                        {
+                            ShowSwapButton();
                         }
                         return;
                     }
@@ -377,22 +389,52 @@ namespace AirplaneTicket.WPF.Pages
                     ShowToast("Энэ суудал захиалагдсан байна.", "error");
                     return;
                 }
-
-                // Reset previously selected seat button
-                if (_selectedSeatButton != null)
+                else
                 {
-                    _selectedSeatButton.Background = Brushes.Green;
+                    // Чөлөөт суудлыг сонгох үед
+                    if (_selectedNewSeatButton != null)
+                    {
+                        // Өмнө сонгогдсон шинэ суудлын өнгийг буцаах
+                        _selectedNewSeatButton.Background = Brushes.Green;
+                    }
+                    
+                    _selectedNewSeatButton = button;
+                    _selectedNewSeat = seat;
+                    button.Background = Brushes.Yellow;
+                    
+                    if (_selectedSeat != null && _selectedSeat.IsOccupied)
+                    {
+                        // Хэрэв эзэмшигдсэн суудал өмнө сонгогдсон бол суудал солих боломжтой
+                        ShowSwapButton();
+                        ShowToast($"Суудлыг {_selectedSeat.SeatNumber}-с {seat.SeatNumber} руу солих боломжтой.", "info");
+                    }
+                    else
+                    {
+                        // Энгийн суудал захиалах үйлдэл
+                        _selectedSeat = seat;
+                        SubmitButton.IsEnabled = true;
+                        
+                        // Шилжүүлэх товчийг нуух
+                        TransferButton.Visibility = Visibility.Collapsed;
+                        TransferButtonInfo.Text = string.Empty;
+                    }
                 }
+            }
+        }
 
-                // Update selected seat
-                _selectedSeatButton = button;
-                _selectedSeat = seat;
-                button.Background = Brushes.Yellow;
-                SubmitButton.IsEnabled = true;
-                
-                TransferButton.Visibility = Visibility.Collapsed;
-                TransferButtonInfo.Text = string.Empty;
-                _selectedSeatOwner = null;
+        private void ShowSwapButton()
+        {
+            if (_selectedSeat != null && _selectedSeat.IsOccupied && _selectedNewSeat != null && !_selectedNewSeat.IsOccupied)
+            {
+                // Зорчигчийн мэдээллийг авч суудал солих товчийг харуулах
+                var passenger = passengers.FirstOrDefault(p => p.Id == _selectedSeat.PassengerId);
+                if (passenger != null)
+                {
+                    TransferButton.Visibility = Visibility.Visible;
+                    TransferButton.Content = "Суудал солих";
+                    TransferButton.Tag = new { OwnerId = passenger.Id, SeatId = _selectedSeat.Id, NewSeatId = _selectedNewSeat.Id };
+                    TransferButtonInfo.Text = $"{passenger.FirstName} {passenger.LastName}-г {_selectedSeat.SeatNumber}-с {_selectedNewSeat.SeatNumber} руу шилжүүлэх";
+                }
             }
         }
 
@@ -483,7 +525,6 @@ namespace AirplaneTicket.WPF.Pages
         }
         else
         {
-            // Одоо эзэмшигч зорчигчийн суудлыг олох шаардлагатай
             var ownerSeats = await _airplaneService.GetPassengerSeatsAsync(currentFlightId, ownerId);
             var seat = ownerSeats.FirstOrDefault();
             if (seat == null)
@@ -497,7 +538,7 @@ namespace AirplaneTicket.WPF.Pages
         ShowLoading(true);
         
         // Суудал шилжүүлэх API дуудах
-        var success = await _airplaneService.ReleaseSeatWithNewPassengerAsync(currentFlightId, seatId, newPassengerId);
+        var success = await _airplaneService.ReleaseSeatAsync(currentFlightId, seatId, newPassengerId);
         
         if (success)
         {

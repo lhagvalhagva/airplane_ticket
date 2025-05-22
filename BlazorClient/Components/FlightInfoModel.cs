@@ -21,13 +21,11 @@ namespace BlazorClient.Components
         
         private string GetStatusText(int status) => status switch
         {
-            0 => "Scheduled",
-            1 => "Check-in",
-            2 => "Boarding",
-            3 => "Departed",
-            4 => "Arrived",
-            5 => "Delayed",
-            6 => "Cancelled",
+            0 => "CheckingIn",
+            1 => "Boarding",
+            2 => "Departed",
+            3 => "Delayed",
+            4 => "Cancelled",
             _ => "Unknown"
         };
     }

@@ -2,9 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using DataAccess;
 using DataAccess.Repositories;
 using BusinessLogic.Services;
-using SignalRHubLibrary;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.ResponseCompression;
+using RestApi.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,9 +26,6 @@ builder.Services.AddCors(options =>
         });
 });
 
-// Configure SignalR
-builder.Services.AddSignalR();
-
 // Configure DbContext
 builder.Services.AddDbContext<AirportDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -42,7 +40,20 @@ builder.Services.AddScoped<IPassengerService, PassengerService>();
 builder.Services.AddScoped<ISeatService, SeatService>();
 builder.Services.AddScoped<IFlightPassengerService, FlightPassengerService>();
 
+// Add SignalR service
+builder.Services.AddSignalR();
+
+// Add Response Compression Middleware
+builder.Services.AddResponseCompression(opts =>
+{
+    opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+        ["application/octet-stream"]);
+});
+
 var app = builder.Build();
+
+// Use Response Compression
+app.UseResponseCompression();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -56,6 +67,8 @@ app.UseCors("AllowAll");
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHub<FlightHub>("/flightHub");
+
+// Configure SignalR hub endpoint
+app.MapHub<FlightHub>("/flighthub");
 
 app.Run();

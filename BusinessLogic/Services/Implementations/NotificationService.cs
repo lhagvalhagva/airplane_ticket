@@ -1,6 +1,6 @@
 using DataAccess.Models;
 using Microsoft.AspNetCore.SignalR;
-using SignalRHubLibrary;
+using Microsoft.AspNetCore.SignalR.Client;
 using System;
 using System.Threading.Tasks;
 
@@ -9,32 +9,67 @@ namespace BusinessLogic.Services
     public class NotificationService : INotificationService
     {
         private readonly NotificationTarget _defaultTarget;
-        private readonly IHubContext<FlightHub>? _hubContext;
+        private readonly HubConnection _hubConnection;
         
-        public NotificationService(IHubContext<FlightHub>? hubContext = null)
+        public NotificationService()
         {
             _defaultTarget = NotificationTarget.Both;
-            _hubContext = hubContext;
+            
+            // Create SignalR client connection
+            _hubConnection = new HubConnectionBuilder()
+                .WithUrl("http://localhost:5027/flighthub")
+                .WithAutomaticReconnect()
+                .Build();
+            
+            // Open connection
+            try
+            {
+                _hubConnection.StartAsync().Wait(5000); // Wait for connection to establish with timeout
+                Console.WriteLine("Successfully connected to SignalR Hub");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error connecting to SignalR Hub: {ex.Message}");
+            }
         }
 
         public async Task NotifyFlightStatusChangedAsync(int flightId, FlightStatus newStatus)
         {
-            Console.WriteLine($"Нислэг ID: {flightId}, төлөв {newStatus} болж өөрчлөгдлөө");
+            Console.WriteLine($"Flight ID: {flightId}, status changed to {newStatus}");
             
-            // Нислэгийн дугаарыг олох логик (жишээ болгож авлаа)
-            string flightNumber = $"MGL{flightId}"; // Жинхэнэ апп дээр нислэгийн дугаарыг repository-оос авах хэрэгтэй
+            string flightNumber = $"MGL{flightId}";
             
-            // SignalR Hub руу мэдээлэл илгээх
-            if (_hubContext != null)
+            try
             {
-                await _hubContext.Clients.Group(flightNumber)
-                    .SendAsync("FlightStatusUpdated", flightNumber, newStatus.ToString());
-                
-                Console.WriteLine($"SignalR ашиглан {flightNumber} нислэгийн төлөв өөрчлөлтийг мэдэгдлээ");
+                // Check if connected to hub
+                if (_hubConnection.State != HubConnectionState.Connected)
+                {
+                    Console.WriteLine($"SignalR Hub not connected. Current state: {_hubConnection.State}. Attempting to reconnect...");
+                    try {
+                        // Try to reconnect
+                        await _hubConnection.StartAsync();
+                        Console.WriteLine("Reconnected to SignalR Hub successfully");
+                    }
+                    catch (Exception reconnectEx) {
+                        Console.WriteLine($"Failed to reconnect to SignalR Hub: {reconnectEx.Message}");
+                    }
+                }
+
+                if (_hubConnection.State == HubConnectionState.Connected)
+                {
+                    Console.WriteLine($"Sending flight status update via SignalR: Flight ID={flightId}, Number={flightNumber}, Status={newStatus}");
+                    await _hubConnection.InvokeAsync("NotifyFlightStatusChanged", flightId, flightNumber, newStatus);
+                    Console.WriteLine($"Successfully sent flight status change notification via SignalR");
+                }
+                else
+                {
+                    Console.WriteLine($"Cannot send notification - SignalR Hub still not connected. Current state: {_hubConnection.State}");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("SignalR HubContext олдсонгүй - мэдэгдэл илгээгдсэнгүй");
+                Console.WriteLine($"Error sending flight status change notification: {ex.Message}");
+                Console.WriteLine($"Exception details: {ex.StackTrace}");
             }
         }
 
@@ -42,7 +77,6 @@ namespace BusinessLogic.Services
         {
             Console.WriteLine($"Нислэг ID: {flightId}, {seatNumber} суудал зорчигч ID: {passengerId}-д хуваарилагдлаа");
             
-            // Энд WebSocket ашиглах код байна
             await Task.CompletedTask;
         }
         

@@ -80,17 +80,35 @@ namespace AirplaneTicket.WPF.Services
             });
             return response.IsSuccessStatusCode;
         }
-
-        public async Task<bool> ReleaseSeatAsync(int flightId, int seatId)
+        public async Task<bool> ReleaseSeatAsync(int flightId, int seatId, int newPassengerId)
         {
-            var response = await _httpClient.PutAsync($"{BaseUrl}/flights/{flightId}/seats/{seatId}/release", null);
-            return response.IsSuccessStatusCode;
-        }
-
-        public async Task<bool> ReleaseSeatWithNewPassengerAsync(int flightId, int seatId, int newPassengerId)
-        {
-            var response = await _httpClient.PutAsync($"{BaseUrl}/flights/{flightId}/seats/{seatId}/release?newPassengerId={newPassengerId}", null);
-            return response.IsSuccessStatusCode;
+            try
+            {
+                // 1. Одоогийн суудлыг чөлөөлөх
+                var releaseResponse = await _httpClient.PutAsync($"{BaseUrl}/flights/{flightId}/seats/{seatId}/release", null);
+                if (!releaseResponse.IsSuccessStatusCode)
+                    return false;
+                
+                // 2. Одоогийн суудлыг авах
+                var seat = (await GetFlightSeatsAsync(flightId)).FirstOrDefault(s => s.Id == seatId);
+                if (seat == null)
+                    return false;
+                    
+                // 3. Шинэ суудлыг авах (бид зорчигчийн байсан суудлыг авч байна)
+                var oldSeats = await GetPassengerSeatsAsync(flightId, newPassengerId);
+                var oldSeat = oldSeats.FirstOrDefault();
+                
+                // 4. Шинэ зорчигчийг суудалд оноох
+                var assignResponse = await AssignSeatAsync(flightId, newPassengerId, seatId);
+                if (!assignResponse)
+                    return false;
+                    
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public async Task<bool> ReserveSeatAsync(int flightId, string seatNumber)

@@ -1,10 +1,10 @@
 @using Microsoft.AspNetCore.Components
-@using Microsoft.AspNetCore.SignalR.Client
 @using System.Net.Http.Json
 @using System.Text.Json.Serialization
 @using System.Linq
 @using BlazorClient.Components
-@using BlazorClient.Models
+@using Microsoft.AspNetCore.SignalR.Client
+@using DataAccess.Models
 @inject NavigationManager Navigation
 @inject HttpClient Http
 
@@ -58,9 +58,8 @@ else
 }
 
 @code {
-    // API харилцаанд FlightInfoModel класс ашиглана
-
-    // API-с буцах JSON бүтэцтэй тааруулахын тулд
+    private HubConnection? hubConnection;
+    
     private class ApiResponse<T>
     {
         [JsonPropertyName("$id")]
@@ -71,7 +70,6 @@ else
     }
 
     private List<FlightInfoModel> flights = new();
-    private HubConnection? hubConnection;
     private bool isLoading = true;
     private string? errorMessage;
 
@@ -79,56 +77,32 @@ else
     {
         try
         {
-            // 1. API-аас нислэгийн мэдээлэл татах
+            // Нислэгийн мэдээлэл татах
             await LoadFlightsFromApi();
-
-            // 2. SignalR холболт тохируулах
+            
+            // SignalR Hub-тай холбогдох
             hubConnection = new HubConnectionBuilder()
-                .WithUrl(Navigation.ToAbsoluteUri("/flightHub"), options =>
-                {
-                    options.SkipNegotiation = true;
-                    options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets;
-                })
-                .WithAutomaticReconnect()
+                .WithUrl("http://localhost:5027/flighthub")
+                .WithAutomaticReconnect(new[] { TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(5) })
                 .Build();
-
-            // Нислэгийн төлөв өөрчлөгдсөн үед хүлээн авах
-            hubConnection.On<string, string>("FlightStatusUpdated", (flightNumber, status) =>
-            {
-                Console.WriteLine($"Нислэг {flightNumber}, төлөв: {status}");
-
-                var flight = flights.FirstOrDefault(f => f.FlightNumber == flightNumber);
-                if (flight != null)
-                {
-                    // StatusText-г шууд өөрчлөхийн оронд Status утгыг өөрчилнө
-                    // Эхлээд status текстийг int төлөвт хөрвүүлэх
-                    if (int.TryParse(status, out int statusInt))
-                    {
-                        flight.Status = statusInt;
-                    }
-                    else
-                    {
-                        switch (status)
-                        {
-                            case "Scheduled": flight.Status = 0; break;
-                            case "Check-in": flight.Status = 1; break;
-                            case "Boarding": flight.Status = 2; break;
-                            case "Departed": flight.Status = 3; break;
-                            case "Arrived": flight.Status = 4; break;
-                            case "Delayed": flight.Status = 5; break;
-                            case "Cancelled": flight.Status = 6; break;
-                            default: flight.Status = 0; break;
-                        }
-                    }
-                    StateHasChanged();
-                }
-            });
-
-            await hubConnection.StartAsync();
+            
+            // Нислэгийн төлөв өөрчлөгдсөн тухай мэдэгдэл хүлээн авах
+            hubConnection.On<int, string, DataAccess.Models.FlightStatus>("ReceiveFlightStatusUpdate", HandleFlightStatusUpdate);
+            
+            // Add reconnection event handlers
+            hubConnection.Closed += async (error) => {
+                Console.WriteLine($"SignalR connection closed due to: {error?.Message}");
+                await Task.Delay(new Random().Next(0, 5) * 1000);
+                await ConnectToSignalR();
+            };
+            
+            // Connect to hub
+            await ConnectToSignalR();
         }
         catch (Exception ex)
         {
-            errorMessage = $"Алдаа: {ex.Message}";
+            errorMessage = $"Error: {ex.Message}";
+            Console.WriteLine($"Error in OnInitializedAsync: {ex.Message}");
             Console.WriteLine(ex.ToString());
         }
         finally
@@ -137,7 +111,20 @@ else
         }
     }
 
-    // API-аас нислэгийн мэдээлэл татах
+    // Connect to SignalR hub
+    private async Task ConnectToSignalR()
+    {
+        try {
+            if (hubConnection.State != HubConnectionState.Connected) {
+                await hubConnection.StartAsync();
+                Console.WriteLine("Successfully connected to SignalR hub");
+            }
+        }
+        catch (Exception ex) {
+            Console.WriteLine($"Error connecting to SignalR hub: {ex.Message}");
+        }
+    }
+
     private async Task LoadFlightsFromApi()
     {
         try
@@ -147,12 +134,10 @@ else
 
             var apiUrl = "http://localhost:5027/api/Flights";
             
-            // API-ээс шууд Flight[] төрлийн JSON хүлээн авна
-            var response = await Http.GetFromJsonAsync<List<Flight>>(apiUrl);
+            var response = await Http.GetFromJsonAsync<List<DataAccess.Models.Flight>>(apiUrl);
 
             if (response != null)
             {
-                // Flight загвараас FlightInfoModel загвар руу хөрвүүлэх
                 flights = response.Select(f => new FlightInfoModel
                 {
                     Id = f.Id,
@@ -164,41 +149,76 @@ else
                     Status = (int)f.Status
                 }).ToList();
                 
-                // Debug мэдээлэл харуулах - алдааг олоход тусална
                 foreach (var flight in flights)
                 {
                     Console.WriteLine($"Flight: {flight.FlightNumber}, Time: {flight.Time}, Destination: {flight.Destination}, Gate: {flight.Gate}, Status: {flight.StatusText}");
                 }
                 
-                Console.WriteLine($"{flights.Count} нислэгийн мэдээлэл татагдлаа");
+                Console.WriteLine($"Loaded {flights.Count} flights successfully");
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Нислэгийн мэдээлэл татахад алдаа гарлаа: {ex.Message}";
+            errorMessage = $"Error loading flight information: {ex.Message}";
+            Console.WriteLine($"Error in LoadFlightsFromApi: {ex.Message}");
             Console.WriteLine(ex.ToString());
         }
+
         finally
         {
             isLoading = false;
         }
+
+
     }
 
-    // Төлөвийн текстийг CSS класс болгон хөрвүүлэх
     private string GetStatusClass(string status) => status switch
     {
-        "Delayed"   => "status-delayed",
-        "Cancelled" => "status-cancelled",
-        "Boarding"  => "status-boarding",
-        "Check-in"  => "status-checkin",
-        "Departed"  => "status-departed",
-        _           => ""
+        "CheckingIn" => "status-checkin",
+        "Boarding"   => "status-boarding",
+        "Departed"   => "status-departed",
+        "Delayed"    => "status-delayed",
+        "Cancelled"  => "status-cancelled",
+        _            => ""
     };
-
+    
+    // Function called when flight status changes (via SignalR)
+    private async Task HandleFlightStatusUpdate(int flightId, string flightNumber, DataAccess.Models.FlightStatus newStatus)
+    {
+        try
+        {
+            Console.WriteLine($"Received flight status update notification: ID={flightId}, Number={flightNumber}, Status={newStatus}");
+            
+            // Find and update flight status
+            var flight = flights.FirstOrDefault(f => f.Id == flightId);
+            if (flight != null)
+            {
+                // Store previous status for visual effect
+                var oldStatus = flight.Status;
+                flight.Status = (int)newStatus;
+                
+                // Update UI
+                await InvokeAsync(StateHasChanged);
+                Console.WriteLine($"Updated flight {flightNumber} status from {(DataAccess.Models.FlightStatus)oldStatus} to {newStatus}");
+            }
+            else
+            {
+                Console.WriteLine($"Could not find flight with ID={flightId} to update status");
+                // Consider refreshing all flights if flight is not found
+                await LoadFlightsFromApi();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating flight status: {ex.Message}");
+        }
+    }
+    // Dispose SignalR connection when component is disposed
     public async ValueTask DisposeAsync()
     {
         if (hubConnection is not null)
         {
+            Console.WriteLine("Disposing SignalR connection");
             await hubConnection.DisposeAsync();
         }
     }
