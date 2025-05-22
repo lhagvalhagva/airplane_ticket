@@ -87,7 +87,8 @@ else
                 .Build();
             
             // Нислэгийн төлөв өөрчлөгдсөн тухай мэдэгдэл хүлээн авах
-            hubConnection.On<int, string, DataAccess.Models.FlightStatus>("ReceiveFlightStatusUpdate", HandleFlightStatusUpdate);
+            hubConnection.On<int, DataAccess.Models.FlightStatus>("ReceiveFlightStatusUpdate", HandleFlightStatusUpdate);
+            Console.WriteLine("Registered ReceiveFlightStatusUpdate handler");
             
             // Add reconnection event handlers
             hubConnection.Closed += async (error) => {
@@ -174,20 +175,20 @@ else
 
     private string GetStatusClass(string status) => status switch
     {
-        "CheckingIn" => "status-checkin",
-        "Boarding"   => "status-boarding",
-        "Departed"   => "status-departed",
-        "Delayed"    => "status-delayed",
-        "Cancelled"  => "status-cancelled",
-        _            => ""
+        "Бүртгэж байна" => "status-checkin",
+        "Онгоцонд сууж байна" => "status-boarding",
+        "Ниссэн" => "status-departed",
+        "Хойшилсон" => "status-delayed",
+        "Цуцалсан" => "status-cancelled",
+        _ => ""
     };
     
     // Function called when flight status changes (via SignalR)
-    private async Task HandleFlightStatusUpdate(int flightId, string flightNumber, DataAccess.Models.FlightStatus newStatus)
+    private async Task HandleFlightStatusUpdate(int flightId, DataAccess.Models.FlightStatus newStatus)
     {
         try
         {
-            Console.WriteLine($"Received flight status update notification: ID={flightId}, Number={flightNumber}, Status={newStatus}");
+            Console.WriteLine($"Received flight status update notification: ID={flightId}, Status={newStatus}");
             
             // Find and update flight status
             var flight = flights.FirstOrDefault(f => f.Id == flightId);
@@ -197,20 +198,24 @@ else
                 var oldStatus = flight.Status;
                 flight.Status = (int)newStatus;
                 
+                Console.WriteLine($"Төлөв өөрчлөгдсөн: {flight.FlightNumber}, хуучин төлөв={flight.StatusText}, шинэ төлөв={((DataAccess.Models.FlightStatus)newStatus)}");
+                
                 // Update UI
-                await InvokeAsync(StateHasChanged);
-                Console.WriteLine($"Updated flight {flightNumber} status from {(DataAccess.Models.FlightStatus)oldStatus} to {newStatus}");
+                await InvokeAsync(() => {
+                    StateHasChanged();
+                    Console.WriteLine($"Дэлгэц шинэчлэгдсэн: {flight.FlightNumber}, шинэ төлөв={flight.StatusText}");
+                });
             }
             else
             {
-                Console.WriteLine($"Could not find flight with ID={flightId} to update status");
+                Console.WriteLine($"Нислэг олдсонгүй ID={flightId}");
                 // Consider refreshing all flights if flight is not found
                 await LoadFlightsFromApi();
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error updating flight status: {ex.Message}");
+            Console.WriteLine($"Төлөв шинэчлэх үед алдаа гарлаа: {ex.Message}");
         }
     }
     // Dispose SignalR connection when component is disposed

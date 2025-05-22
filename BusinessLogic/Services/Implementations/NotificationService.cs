@@ -2,6 +2,8 @@ using DataAccess.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 using System;
+using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BusinessLogic.Services
@@ -18,58 +20,101 @@ namespace BusinessLogic.Services
             // Create SignalR client connection
             _hubConnection = new HubConnectionBuilder()
                 .WithUrl("http://localhost:5027/flighthub")
-                .WithAutomaticReconnect()
+                .WithAutomaticReconnect(new[] { TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(5) })
                 .Build();
             
-            // Open connection
+            // Register for connection events
+            _hubConnection.Closed += async (error) => {
+                Console.WriteLine($"SignalR connection closed: {error?.Message}");
+                await Task.Delay(new Random().Next(0, 5) * 1000); // Random delay before reconnecting
+                await EnsureConnectedAsync();
+            };
+            
+            // Open connection asynchronously
+            EnsureConnectedAsync().Wait();
+        }
+        
+        private async Task<bool> EnsureConnectedAsync()
+        {
             try
             {
-                _hubConnection.StartAsync().Wait(5000); // Wait for connection to establish with timeout
-                Console.WriteLine("Successfully connected to SignalR Hub");
+                if (_hubConnection.State != HubConnectionState.Connected)
+                {
+                    Console.WriteLine($"Connecting to SignalR Hub (current state: {_hubConnection.State})...");
+                    await _hubConnection.StartAsync();
+                    Console.WriteLine("Successfully connected to SignalR Hub");
+                    return true;
+                }
+                return true;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error connecting to SignalR Hub: {ex.Message}");
+                return false;
             }
         }
 
         public async Task NotifyFlightStatusChangedAsync(int flightId, FlightStatus newStatus)
         {
+            Console.WriteLine($"========== SENDING NOTIFICATION ===========");
             Console.WriteLine($"Flight ID: {flightId}, status changed to {newStatus}");
             
-            string flightNumber = $"MGL{flightId}";
-            
+            // Create notification data with timestamp
+            var notificationData = new {
+                FlightId = flightId,
+                NewStatus = newStatus,
+                Timestamp = DateTime.Now
+            };
+
             try
             {
-                // Check if connected to hub
-                if (_hubConnection.State != HubConnectionState.Connected)
+                // Ensure connection before sending
+                Console.WriteLine($"Checking SignalR connection state: {_hubConnection.State}");
+                bool isConnected = await EnsureConnectedAsync();
+                
+                if (isConnected)
                 {
-                    Console.WriteLine($"SignalR Hub not connected. Current state: {_hubConnection.State}. Attempting to reconnect...");
-                    try {
-                        // Try to reconnect
-                        await _hubConnection.StartAsync();
-                        Console.WriteLine("Reconnected to SignalR Hub successfully");
+                    // Call NotifyFlightStatusChanged method on the hub
+                    Console.WriteLine($"Preparing to send via SignalR: {JsonSerializer.Serialize(notificationData)}");
+                    Console.WriteLine($"Hub method name: NotifyFlightStatusChanged");
+                    Console.WriteLine($"Parameters: [{flightId}, {newStatus}]");
+                    
+                    // Try multiple times if needed
+                    for (int attempt = 1; attempt <= 3; attempt++)
+                    {
+                        try
+                        {
+                            Console.WriteLine($"Sending attempt {attempt}/3...");
+                            // Important: Make sure parameter order and types match the Hub method
+                            await _hubConnection.InvokeAsync(
+                                "NotifyFlightStatusChanged",
+                                flightId,
+                                newStatus);
+                                
+                            Console.WriteLine($"SUCCESS: Notification sent to SignalR hub");
+                            break; // Success, exit retry loop
+                        }
+                        catch (Exception sendEx) when (attempt < 3)
+                        {
+                            Console.WriteLine($"FAILED: Attempt {attempt} error: {sendEx.Message}");
+                            Console.WriteLine($"Exception type: {sendEx.GetType().Name}");
+                            Console.WriteLine($"Will retry in {500 * attempt}ms...");
+                            await Task.Delay(500 * attempt); // Increasing delay between retries
+                        }
                     }
-                    catch (Exception reconnectEx) {
-                        Console.WriteLine($"Failed to reconnect to SignalR Hub: {reconnectEx.Message}");
-                    }
-                }
-
-                if (_hubConnection.State == HubConnectionState.Connected)
-                {
-                    Console.WriteLine($"Sending flight status update via SignalR: Flight ID={flightId}, Number={flightNumber}, Status={newStatus}");
-                    await _hubConnection.InvokeAsync("NotifyFlightStatusChanged", flightId, flightNumber, newStatus);
-                    Console.WriteLine($"Successfully sent flight status change notification via SignalR");
                 }
                 else
                 {
-                    Console.WriteLine($"Cannot send notification - SignalR Hub still not connected. Current state: {_hubConnection.State}");
+                    Console.WriteLine($"ERROR: Cannot send notification - Unable to establish SignalR connection");
                 }
+                
+                Console.WriteLine($"========== NOTIFICATION COMPLETE ============");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error sending flight status change notification: {ex.Message}");
-                Console.WriteLine($"Exception details: {ex.StackTrace}");
+                Console.WriteLine($"ERROR: Flight status notification failed: {ex.Message}");
+                Console.WriteLine($"Exception type: {ex.GetType().Name}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
             }
         }
 

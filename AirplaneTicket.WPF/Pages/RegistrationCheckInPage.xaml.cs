@@ -70,11 +70,14 @@ namespace AirplaneTicket.WPF.Pages
                 await LoadFlightsAsync();
                 if (flights != null && flights.Count > 0)
                 {
+                    // Сонгосон нислэгийн төлөвийг тохируулах үйлдэл FlightComboBox_SelectionChanged дотор болно
                     FlightComboBox.SelectedIndex = 0;
                     await LoadPassengersAsync();
                 }
-                FlightStatusComboBox.SelectedIndex = 0;
-                ShowToast("Ready.");
+                else
+                {
+                    ShowToast("Нислэгийн мэдээлэл олдсонгүй", "error");
+                }
             }
             catch (HttpRequestException ex)
             {
@@ -126,6 +129,21 @@ namespace AirplaneTicket.WPF.Pages
                     ShowFlightInfo(selectedFlight);
                     ShowLoading(true);
                     
+                    // Нислэгийн шинэчилсэн мэдээллийг авах (төлөв зэрэг өөрчлөгдсөн байж болно)
+                    Flight updatedFlight = await _airplaneService.GetFlightAsync(selectedFlight.Id);
+                    if (updatedFlight != null)
+                    {
+                        // Нислэгийн төлөвийг ComboBox-д тохируулах
+                        FlightStatusComboBox.SelectedItem = updatedFlight.Status;
+                        
+                        // Нислэгийн мэдээллийг шинэчлэх
+                        int index = flights.FindIndex(f => f.Id == updatedFlight.Id);
+                        if (index >= 0)
+                        {
+                            flights[index] = updatedFlight;
+                        }
+                    }
+                    
                     // Load seats and passengers in parallel
                     var seatsTask = LoadAvailableSeatsAsync();
                     var passengersTask = LoadPassengersAsync();
@@ -133,12 +151,12 @@ namespace AirplaneTicket.WPF.Pages
                     await Task.WhenAll(seatsTask, passengersTask);
                     
                     GenerateSeatMap();
-                    ShowToast($"Flight changed to: {selectedFlight.FlightNumber}");
+                    ShowToast($"Нислэг сонгогдлоо: {selectedFlight.FlightNumber}, Төлөв: {updatedFlight.Status}");
                 }
             }
             catch (Exception ex)
             {
-                ShowToast($"Error changing flight: {ex.Message}", "error");
+                ShowToast($"Нислэг сонгоход алдаа гарлаа: {ex.Message}", "error");
             }
             finally
             {
@@ -570,6 +588,10 @@ namespace AirplaneTicket.WPF.Pages
 
 private async void FlightStatusComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            // Хэрэв програм руу орж ирэх үед авааматаар дуудагдаж байгаа бол алгасах
+            if (e.AddedItems.Count == 0 || !IsLoaded)
+                return;
+                
             if (FlightStatusComboBox.SelectedItem is FlightStatus status)
             {
                 var selectedFlight = flights.FirstOrDefault(f => f.Id == currentFlightId);
@@ -578,12 +600,51 @@ private async void FlightStatusComboBox_SelectionChanged(object sender, Selectio
                     try
                     {
                         ShowLoading(true);
-                        selectedFlight.Status = status;
-                        await _airplaneService.UpdateFlightStatusAsync(selectedFlight.Id, status);
-                        ShowToast($"Нислэгийн төлөв шинэчлэгдлээ: {status}");
+                        
+                        // Өмнөх төлөвийг хадгалах
+                        var previousStatus = selectedFlight.Status;
+                        
+                        // Төлөв өөрчлөгдсөн эсэхийг шалгах
+                        if (previousStatus == status)
+                        {
+                            ShowToast($"Нислэгийн төлөв өөрчлөгдөөгүй: {status}");
+                            return;
+                        }
+                        
+                        // Өгөгдлийн сан дээр төлөв шинэчлэх
+                        var updatedStatus = await _airplaneService.UpdateFlightStatusAsync(selectedFlight.Id, status);
+                        
+                        // Өгөгдлийн сангаас буцаж ирсэн төлөвийг хадгалах
+                        selectedFlight.Status = updatedStatus;
+                        
+                        // Хэрэв төлөв тэнцүү бол амжилттай шинэчлэгдсэн
+                        if (updatedStatus == status)
+                        {
+                            ShowToast($"Нислэгийн төлөв шинэчлэгдлээ: {previousStatus} -> {updatedStatus}");
+                            
+                            // Нислэгийн дэлгэрэнгүй мэдээллийг дахин авах
+                            Flight updatedFlight = await _airplaneService.GetFlightAsync(selectedFlight.Id);
+                            if (updatedFlight != null)
+                            {
+                                // Нислэгийн мэдээллийг шинэчлэх
+                                int index = flights.FindIndex(f => f.Id == updatedFlight.Id);
+                                if (index >= 0)
+                                {
+                                    flights[index] = updatedFlight;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // Хэрэв төлөв өөр байвал ComboBox-г шинээр сонгогдсон төлөвөөр тохируулах
+                            FlightStatusComboBox.SelectedItem = updatedStatus;
+                            ShowToast($"Нислэгийн төлөв {updatedStatus} болж өөрчлөгдлөө", "info");
+                        }
                     }
                     catch (Exception ex)
                     {
+                        // Алдаа гарсан тохиолдолд хуучин төлөвт буцаах
+                        FlightStatusComboBox.SelectedItem = selectedFlight.Status;
                         ShowToast($"Нислэгийн төлөв шинэчлэхэд алдаа гарлаа: {ex.Message}", "error");
                     }
                     finally

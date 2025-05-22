@@ -1,4 +1,5 @@
 using System;
+using DataAccess.Models;
 
 namespace BlazorClient.Components
 {
@@ -19,14 +20,14 @@ namespace BlazorClient.Components
         public string Gate => $"Gate {Id}";
         public string StatusText => GetStatusText(Status);
         
-        private string GetStatusText(int status) => status switch
+        private string GetStatusText(int status) => ((FlightStatus)status) switch
         {
-            0 => "CheckingIn",
-            1 => "Boarding",
-            2 => "Departed",
-            3 => "Delayed",
-            4 => "Cancelled",
-            _ => "Unknown"
+            FlightStatus.CheckingIn => "Бүртгэж байна",
+            FlightStatus.Boarding => "Онгоцонд сууж байна",
+            FlightStatus.Departed => "Ниссэн",
+            FlightStatus.Delayed => "Хойшилсон",
+            FlightStatus.Cancelled => "Цуцалсан",
+            _ => "Тодорхойгүй"
         };
     }
 }

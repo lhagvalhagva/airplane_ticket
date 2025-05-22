@@ -161,10 +161,10 @@
                     </Border>
 
                     <!-- Seat Map Title -->
-                    <TextBlock Grid.Row="2" Text="Суудлын зураг" 
+                    <TextBlock Grid.Row="2" Text="Суудлын план зураг" 
                              FontSize="18" 
                              FontWeight="SemiBold" 
-                             Margin="0,0,0,20"/>
+                             Margin="0,0,0,40"/>
 
                     <!-- Seat Map Grid -->
                     <Grid x:Name="SeatMapGrid" Grid.Row="2">
