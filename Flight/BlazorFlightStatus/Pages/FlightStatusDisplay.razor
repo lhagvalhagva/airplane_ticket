@@ -1,0 +1,147 @@
+﻿@page "/flightstatusdisplay"
+@using Microsoft.AspNetCore.SignalR.Client
+@using System.Collections.Generic
+@implements IAsyncDisposable
+@inject NavigationManager NavigationManager
+
+<PageTitle>Flight Statuses</PageTitle>
+
+<div class="departure-title">Departure</div>
+
+<h1>Flight Statuses</h1>
+
+@if (flights.Count == 0)
+{
+    <p><em>No flight data available.</em></p>
+}
+else
+{
+    <table class="table table-dark table-striped">
+        <thead>
+            <tr>
+                <th>Flight Number</th>
+                <th>Status</th>
+                <th>Origin</th>
+                <th>Destination</th>
+                <th>Departure</th>
+                <th>Arrival</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var flight in flights)
+            {
+                <tr>
+                    <td>@flight.FlightNumber</td>
+                    <td>@flight.Status</td>
+                    <td>@flight.Origin</td>
+                    <td>@flight.Destination</td>
+                    <td>@flight.DepartureTime.ToString("g")</td>
+                    <td>@flight.ArrivalTime.ToString("g")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<div class="alert alert-info mt-3">
+    SignalR Connection State: @hubConnection?.State.ToString()
+</div>
+
+<style>
+    .departure-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #fff;
+    background: #212529;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    body, .table-dark {
+    background-color: #181a1b !important;
+    color: #f8f9fa !important;
+    }
+    .table-dark th, .table-dark td {
+    color: #f8f9fa !important;
+    }
+</style>
+
+@code {
+    private HubConnection? hubConnection;
+
+    private List<FlightStatus> flights = new()
+    {
+        new FlightStatus
+        {
+            FlightNumber = "AA123",
+            Status = "On Time",
+            Origin = "JFK",
+            Destination = "LAX",
+            DepartureTime = DateTime.Now.AddHours(1),
+            ArrivalTime = DateTime.Now.AddHours(6)
+        },
+        new FlightStatus
+        {
+            FlightNumber = "DL456",
+            Status = "Delayed",
+            Origin = "ATL",
+            Destination = "ORD",
+            DepartureTime = DateTime.Now.AddMinutes(30),
+            ArrivalTime = DateTime.Now.AddHours(2)
+        },
+        new FlightStatus
+        {
+            FlightNumber = "UA789",
+            Status = "Boarding",
+            Origin = "SFO",
+            Destination = "SEA",
+            DepartureTime = DateTime.Now.AddMinutes(10),
+            ArrivalTime = DateTime.Now.AddHours(2)
+        }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("http://localhost:5000/flightstatushub"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        hubConnection.On<string, string>("ReceiveFlightStatus", (flight, status) =>
+        {
+            Console.WriteLine($"Received flight status: {flight} - {status}");
+            var existingFlight = flights.FirstOrDefault(f => f.FlightNumber == flight);
+            if (existingFlight != null)
+            {
+                existingFlight.Status = status;
+            }
+            // else
+            // {
+            //     flights.Add(flight);
+            // }
+            InvokeAsync(StateHasChanged);
+        });
+        
+        await hubConnection.StartAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+
+    public class FlightStatus
+    {
+        public string FlightNumber { get; set; } = "";
+        public string Status { get; set; } = "";
+        public string Origin { get; set; } = "";
+        public string Destination { get; set; } = "";
+        public DateTime DepartureTime { get; set; }
+        public DateTime ArrivalTime { get; set; }
+    }
+}
