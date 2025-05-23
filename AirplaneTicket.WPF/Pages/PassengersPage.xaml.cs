@@ -41,7 +41,7 @@ namespace AirplaneTicket.WPF.Pages
 
             var filteredPassengers = _allPassengers.AsEnumerable();
 
-            // Apply search filter
+           
             if (!string.IsNullOrWhiteSpace(txtSearch.Text))
             {
                 var searchTerm = txtSearch.Text.ToLower();
@@ -67,15 +67,15 @@ namespace AirplaneTicket.WPF.Pages
 
         private async void btnAddPassenger_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new PassengerDialog(""); // Empty passport number for new passenger
+            var dialog = new PassengerDialog("");
             if (dialog.ShowDialog() == true && dialog.Result != null && dialog.SelectedFlight != null)
             {
                 try
                 {
-                    // First create the passenger
+                   
                     var createdPassenger = await _airplaneService.CreatePassengerAsync(dialog.Result);
                     
-                    // Then register the passenger to the selected flight
+                   
                     await _airplaneService.RegisterPassengerToFlightAsync(dialog.SelectedFlight.Id, createdPassenger.Id);
                     
                     LoadPassengers();
@@ -96,7 +96,7 @@ namespace AirplaneTicket.WPF.Pages
                 {
                     try
                     {
-                        dialog.Result.Id = selectedPassenger.Id; // Preserve the ID
+                        dialog.Result.Id = selectedPassenger.Id;
                         await _airplaneService.UpdatePassengerAsync(dialog.Result);
                         LoadPassengers();
                     }
@@ -135,7 +135,7 @@ namespace AirplaneTicket.WPF.Pages
 
         private void dgPassengers_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // Selection is handled by the edit and delete buttons
+           
         }
     }
 } 

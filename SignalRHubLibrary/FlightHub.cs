@@ -21,7 +21,6 @@ namespace SignalRHubLibrary
 
             try 
             {
-                // Notify all clients
                 await Clients.All.SendAsync("FlightStatusChanged", flightId, status);
                 Console.WriteLine($"Notification sent successfully");
             }

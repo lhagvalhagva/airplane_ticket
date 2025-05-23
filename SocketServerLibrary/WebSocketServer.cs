@@ -23,7 +23,6 @@ namespace SocketServerLibrary
         {
             get
             {
-                // Хэрэв instance үүсээгүй бол үүсгэх
                 if (_instance == null)
                 {
                     lock (_lock)
@@ -133,8 +132,6 @@ namespace SocketServerLibrary
                     {
                         string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
                         Console.WriteLine($"Хүлээн авсан мессеж (клиент {clientId}): {message}");
-                        
-                        // Энд мессежийг боловсруулах логик бичнэ
                     }
                     else
                     {
@@ -150,9 +147,7 @@ namespace SocketServerLibrary
             finally
             {
                 // Холболт салгагдсан үед цэвэрлэх
-                _connectedSockets.TryRemove(clientId, out _);
-                try { clientSocket.Close(); } catch { }
-                Console.WriteLine($"Клиент {clientId} холболт цэвэрлэгдлээ");
+                CleanupClient(clientId, clientSocket);
             }
         }
 
@@ -161,10 +156,7 @@ namespace SocketServerLibrary
         /// </summary>
         public void SendMessageToAll(string eventName, object data)
         {
-            var messageObj = new { Event = eventName, Data = data, Timestamp = DateTime.UtcNow };
-            string jsonMessage = JsonSerializer.Serialize(messageObj);
-            byte[] messageBytes = Encoding.UTF8.GetBytes(jsonMessage);
-            
+            byte[] messageBytes = CreateMessageBytes(eventName, data);
             List<int> disconnectedClients = new List<int>();
             
             foreach (var client in _connectedSockets)
@@ -192,7 +184,7 @@ namespace SocketServerLibrary
             {
                 if (_connectedSockets.TryRemove(clientId, out Socket socket))
                 {
-                    try { socket.Close(); } catch { }
+                    CloseSocketSafely(socket);
                     Console.WriteLine($"Клиент {clientId} холболт цэвэрлэгдлээ (автомат)");
                 }
             }
@@ -208,9 +200,7 @@ namespace SocketServerLibrary
                 
             try
             {
-                var messageObj = new { Event = eventName, Data = data, Timestamp = DateTime.UtcNow };
-                string jsonMessage = JsonSerializer.Serialize(messageObj);
-                byte[] messageBytes = Encoding.UTF8.GetBytes(jsonMessage);
+                byte[] messageBytes = CreateMessageBytes(eventName, data);
                 
                 if (clientSocket.Connected)
                 {
@@ -219,9 +209,7 @@ namespace SocketServerLibrary
                 }
                 else
                 {
-                    _connectedSockets.TryRemove(clientId, out _);
-                    try { clientSocket.Close(); } catch { }
-                    Console.WriteLine($"Клиент {clientId} холболт цэвэрлэгдлээ (холболт байхгүй)");
+                    CleanupClient(clientId, clientSocket);
                     return false;
                 }
             }
@@ -247,13 +235,13 @@ namespace SocketServerLibrary
                 // Бүх клиентийн холболтыг хаах
                 foreach (var client in _connectedSockets)
                 {
-                    try { client.Value.Close(); } catch { }
+                    CloseSocketSafely(client.Value);
                 }
                 
                 _connectedSockets.Clear();
                 
                 // Сервер сокетийг хаах
-                try { _serverSocket.Close(); } catch { }
+                CloseSocketSafely(_serverSocket);
                 
                 HasStarted = false;
                 Console.WriteLine("WebSocket сервер зогслоо");
@@ -280,5 +268,37 @@ namespace SocketServerLibrary
             SendMessageToAll("SeatAssigned", data);
             Console.WriteLine($"Суудал оноолтын мэдэгдэл илгээгдлээ: Нислэг {flightId}, Суудал {seatNumber}, Зорчигч {passengerId}");
         }
+
+        #region Helper методууд
+
+        /// <summary>
+        /// JSON мессеж үүсгэж byte array болгох
+        /// </summary>
+        private byte[] CreateMessageBytes(string eventName, object data)
+        {
+            var messageObj = new { Event = eventName, Data = data, Timestamp = DateTime.UtcNow };
+            string jsonMessage = JsonSerializer.Serialize(messageObj);
+            return Encoding.UTF8.GetBytes(jsonMessage);
+        }
+
+        /// <summary>
+        /// Клиентийг аюулгүй цэвэрлэх
+        /// </summary>
+        private void CleanupClient(int clientId, Socket clientSocket)
+        {
+            _connectedSockets.TryRemove(clientId, out _);
+            CloseSocketSafely(clientSocket);
+            Console.WriteLine($"Клиент {clientId} холболт цэвэрлэгдлээ");
+        }
+
+        /// <summary>
+        /// Socket-г аюулгүй хаах
+        /// </summary>
+        private void CloseSocketSafely(Socket socket)
+        {
+            try { socket?.Close(); } catch { }
+        }
+
+        #endregion
     }
 }

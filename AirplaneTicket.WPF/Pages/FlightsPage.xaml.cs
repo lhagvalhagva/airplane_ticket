@@ -41,7 +41,7 @@ namespace AirplaneTicket.WPF.Pages
 
             var filteredFlights = _allFlights.AsEnumerable();
 
-            // Apply search filter
+           
             if (!string.IsNullOrWhiteSpace(txtSearch.Text))
             {
                 var searchTerm = txtSearch.Text.ToLower();
@@ -51,15 +51,15 @@ namespace AirplaneTicket.WPF.Pages
                     f.ArrivalCity.ToLower().Contains(searchTerm));
             }
 
-            // Apply status filter
+           
             if (cmbFilter.SelectedIndex > 0)
             {
                 switch (cmbFilter.SelectedIndex)
                 {
-                    case 1: // Only available
+                    case 1:
                         filteredFlights = filteredFlights.Where(f => f.AvailableSeats > 0);
                         break;
-                    case 2: // Today's flights
+                    case 2:
                         var today = DateTime.Today;
                         filteredFlights = filteredFlights.Where(f => 
                             f.DepartureTime.Date == today || f.ArrivalTime.Date == today);
@@ -149,7 +149,7 @@ namespace AirplaneTicket.WPF.Pages
 
         private void dgFlights_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // Selection is handled by the edit and delete buttons
+           
         }
     }
 } 

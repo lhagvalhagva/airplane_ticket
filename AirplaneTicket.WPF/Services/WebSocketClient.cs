@@ -253,7 +253,7 @@ namespace AirplaneTicket.WPF.Services
             }
         }
         
-        #region Ивэнт дуудах арга
+        #region Event арга
         
         protected virtual void OnSeatAssigned(SeatAssignedEventArgs e)
         {

@@ -652,13 +652,11 @@ namespace AirplaneTicket.WPF.Pages
                 var rowNumbers = seatNumbers.Select(sn => int.Parse(new string(sn.TakeWhile(char.IsDigit).ToArray()))).Distinct().OrderBy(n => n).ToList();
                 var colLetters = seatNumbers.Select(sn => sn.FirstOrDefault(c => char.IsLetter(c))).Distinct().OrderBy(c => c).ToList();
 
-                // Create rows and columns
                 foreach (var _ in rowNumbers)
                     SeatMapGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
                 foreach (var _ in colLetters)
                     SeatMapGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-                // Add seat buttons
                 foreach (var seat in seatList)
                 {
                     int row = rowNumbers.IndexOf(int.Parse(new string(seat.SeatNumber.TakeWhile(char.IsDigit).ToArray())));
@@ -680,7 +678,6 @@ namespace AirplaneTicket.WPF.Pages
                     SeatMapGrid.Children.Add(button);
                 }
                 
-                // Reset selection state
                 _selectedSeatButton = null;
                 _selectedSeat = null;
                 SubmitButton.IsEnabled = false;
@@ -788,11 +785,56 @@ namespace AirplaneTicket.WPF.Pages
 
             ShowToast($"Суудал {seat.SeatNumber} {passenger.FirstName} {passenger.LastName} дээр оноогдлоо");
             
+            await PrintTicketAsync(flightId, passenger, seat);
+            
             await RefreshDataAsync();
 
             _selectedSeatButton = null;
             _selectedSeat = null;
             SubmitButton.IsEnabled = false;
+        }
+
+        /// <summary>
+        /// Тасалбар хэвлэх
+        /// </summary>
+        private async Task PrintTicketAsync(int flightId, Passenger passenger, Seat seat)
+        {
+            try
+            {
+                // Нислэгийн мэдээлэл авах
+                var flight = flights.FirstOrDefault(f => f.Id == flightId);
+                if (flight == null)
+                {
+                    ShowToast("Нислэгийн мэдээлэл олдсонгүй. Тасалбар хэвлэгдсэнгүй.", "error");
+                    return;
+                }
+
+                // Тасалбарын мэдээлэл бэлтгэх
+                var ticketInfo = new TicketInfo
+                {
+                    FlightNumber = flight.FlightNumber,
+                    DepartureCity = flight.DepartureCity,
+                    ArrivalCity = flight.ArrivalCity,
+                    DepartureTime = flight.DepartureTime,
+                    ArrivalTime = flight.ArrivalTime,
+                    PassengerName = $"{passenger.FirstName} {passenger.LastName}",
+                    PassportNumber = passenger.PassportNumber,
+                    PhoneNumber = passenger.PhoneNumber,
+                    SeatNumber = seat.SeatNumber,
+                    RegistrationDate = DateTime.Now
+                };
+
+                // Хэвлэх сервис ашиглан тасалбар хэвлэх
+                var printService = new TicketPrintService();
+                printService.PrintTicket(ticketInfo);
+                
+                ShowToast("Тасалбар хэвлэгдлээ!", "info");
+            }
+            catch (Exception ex)
+            {
+                ShowToast($"Тасалбар хэвлэхэд алдаа гарлаа: {ex.Message}", "error");
+                // Хэвлэх алдаа суудал оноолтод нөлөөлөхгүй
+            }
         }
 
         #endregion
