@@ -1,6 +1,8 @@
 using DataAccess.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
+using SignalRHubLibrary;
+using SocketServerLibrary;
 using System;
 using System.Text.Json;
 using System.Threading;
@@ -11,139 +13,180 @@ namespace BusinessLogic.Services
     public class NotificationService : INotificationService
     {
         private readonly NotificationTarget _defaultTarget;
-        private readonly HubConnection _hubConnection;
+        private IHubContext<FlightHub> _flightHubContext;
+        private HubConnection _hubConnection;
+        private readonly string _hubUrl = "http://localhost:5000/flightHub";
+        // WebSocketServer синглтон байх шаардлагагүй
         
         public NotificationService()
         {
             _defaultTarget = NotificationTarget.Both;
-            
-            // Create SignalR client connection
-            _hubConnection = new HubConnectionBuilder()
-                .WithUrl("http://localhost:5027/flighthub")
-                .WithAutomaticReconnect(new[] { TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(5) })
-                .Build();
-            
-            // Register for connection events
-            _hubConnection.Closed += async (error) => {
-                Console.WriteLine($"SignalR connection closed: {error?.Message}");
-                await Task.Delay(new Random().Next(0, 5) * 1000);
-                await EnsureConnectedAsync();
-            };
-            
-            // Open connection asynchronously - avoid blocking with Wait()
-            Task.Run(async () => {
-                try {
-                    await EnsureConnectedAsync();
-                    Console.WriteLine("Initial SignalR connection established asynchronously");
-                }
-                catch (Exception ex) {
-                    Console.WriteLine($"Initial SignalR connection failed: {ex.Message}");
-                }
-            });
+            InitializeSignalRConnection();
+            InitializeWebSocketServer();
         }
         
-        private async Task<bool> EnsureConnectedAsync()
+        private void InitializeWebSocketServer()
         {
             try
             {
-                if (_hubConnection.State != HubConnectionState.Connected)
+                // Синглтон WebSocketServer объект авах
+                WebSocketServer instance = WebSocketServer.Instance;
+                
+                // Хэрэв сервер эхлээд байвал дахин эхлүүлэх шаардлагагүй
+                if (instance.HasStarted)
                 {
-                    Console.WriteLine($"Connecting to SignalR Hub (current state: {_hubConnection.State})...");
-                    
-                    // Set a timeout for connection attempt
-                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-                    await _hubConnection.StartAsync(cts.Token);
-                    
-                    Console.WriteLine($"Successfully connected to SignalR Hub (ID: {_hubConnection.ConnectionId})");
-                    return true;
+                    Console.WriteLine("WebSocket server is already running");
+                    return;
                 }
-                return true;
+                
+                // Серверийг эхлүүлэх
+                instance.Start();
+                Console.WriteLine("WebSocket server initialized successfully at port 9009");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error connecting to SignalR Hub: {ex.Message}");
-                Console.WriteLine($"Exception type: {ex.GetType().Name}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                return false;
+                Console.WriteLine($"Error initializing WebSocket server: {ex.Message}");
+            }
+        }
+        
+        private async void InitializeSignalRConnection()
+        {
+            try
+            {
+                _hubConnection = new HubConnectionBuilder()
+                    .WithUrl(_hubUrl)
+                    .WithAutomaticReconnect()
+                    .Build();
+                
+                await _hubConnection.StartAsync();
+                Console.WriteLine("SignalR connection successful: " + _hubUrl);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error creating SignalR connection: {ex.Message}");
             }
         }
 
+        /// <summary>
+        /// Нислэгийн төлөв өөрчлөгдөх үед дуудагдах арга. SignalR ашиглан бүх хэрэглэгчдэд мэдэгдэнэ.
+        /// </summary>
+        /// <param name="flightId">Нислэгийн ID</param>
+        /// <param name="newStatus">Шинэ төлөв</param>
         public async Task NotifyFlightStatusChangedAsync(int flightId, FlightStatus newStatus)
         {
-            Console.WriteLine($"========== SENDING NOTIFICATION ===========");
-            Console.WriteLine($"Flight ID: {flightId}, status changed to {newStatus} (value: {(int)newStatus})");
+            Console.WriteLine($"========== SENDING FLIGHT STATUS CHANGE NOTIFICATION ===========");
+            Console.WriteLine($"NotificationService: Flight ID: {flightId}, status changed to: {newStatus} (value: {(int)newStatus})");
             
-            // Create notification data with timestamp
-            var notificationData = new {
-                FlightId = flightId,
-                NewStatus = newStatus,
-                NewStatusValue = (int)newStatus,
-                Timestamp = DateTime.Now
-            };
-
+            // SignalR ашиглан бүх хэрэглэгчдэд мэдээлэл илгээх
             try
             {
-                // Ensure connection before sending
-                Console.WriteLine($"Checking SignalR connection state: {_hubConnection.State}");
-                bool isConnected = await EnsureConnectedAsync();
-                
-                if (isConnected)
+                if (_flightHubContext != null)
                 {
-                    // Call NotifyFlightStatusChanged method on the hub
-                    Console.WriteLine($"Preparing to send via SignalR: {JsonSerializer.Serialize(notificationData)}");
-                    Console.WriteLine($"Hub method name: NotifyFlightStatusChanged");
-                    Console.WriteLine($"Parameters: [{flightId}, {newStatus}] (value: {(int)newStatus})");
-                    
-                    // Try multiple times if needed
-                    for (int attempt = 1; attempt <= 3; attempt++)
-                    {
-                        try
-                        {
-                            Console.WriteLine($"Sending attempt {attempt}/3...");
-                            
-                            // Send directly to ReceiveFlightStatusUpdate for more reliable delivery
-                            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                            await _hubConnection.InvokeAsync(
-                                "ReceiveFlightStatusUpdate",
-                                flightId,
-                                newStatus,
-                                cts.Token);
-                                
-                            Console.WriteLine($"SUCCESS: Direct notification sent");
-                            break; // Success, exit retry loop
-                        }
-                        catch (Exception sendEx) when (attempt < 3)
-                        {
-                            Console.WriteLine($"FAILED: Attempt {attempt} error: {sendEx.Message}");
-                            Console.WriteLine($"Exception type: {sendEx.GetType().Name}");
-                            Console.WriteLine($"Will retry in {500 * attempt}ms...");
-                            await Task.Delay(500 * attempt); // Increasing delay between retries
-                        }
-                    }
+                    Console.WriteLine("Sending notification using HubContext...");
+                    await _flightHubContext.Clients.All.SendAsync("FlightStatusChanged", flightId, (int)newStatus);
+                    Console.WriteLine("SignalR notification sent successfully (using HubContext)");
+                }
+                else if (_hubConnection != null && _hubConnection.State == HubConnectionState.Connected)
+                {
+                    Console.WriteLine($"Sending notification using HubConnection... (State: {_hubConnection.State})");
+                    // Use direct HubConnection if HubContext is not available
+                    await _hubConnection.SendAsync("NotifyFlightStatusChanged", flightId, (int)newStatus);
+                    Console.WriteLine("SignalR notification sent successfully (using HubConnection)");
                 }
                 else
                 {
-                    Console.WriteLine($"ERROR: Cannot send notification - Unable to establish SignalR connection");
+                    Console.WriteLine($"ERROR: No SignalR connection available! HubContext={_flightHubContext != null}, HubConnection={_hubConnection != null}");
+                    
+                    // Try to create a new connection if none exists
+                    if (_hubConnection == null)
+                    {
+                        Console.WriteLine("Attempting to create a new connection...");
+                        InitializeSignalRConnection();
+                        Console.WriteLine("Waiting 3 seconds for connection to stabilize...");
+                        await Task.Delay(3000); // Wait for connection to stabilize
+                        
+                        if (_hubConnection != null && _hubConnection.State == HubConnectionState.Connected)
+                        {
+                            Console.WriteLine("Sending notification through new connection...");
+                            await _hubConnection.SendAsync("NotifyFlightStatusChanged", flightId, (int)newStatus);
+                            Console.WriteLine("Notification sent through new connection!");
+                        }
+                    }
                 }
-                
-                Console.WriteLine($"========== NOTIFICATION COMPLETE ============");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ERROR: Flight status notification failed: {ex.Message}");
-                Console.WriteLine($"Exception type: {ex.GetType().Name}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                Console.WriteLine($"CRITICAL ERROR: Failed to send SignalR notification: {ex.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
             }
         }
 
+        /// <summary>
+        /// Суудал хуваарилах үед дуудагдах арга. WebSocket ашиглан мэдэгдэл илгээнэ.
+        /// </summary>
+        /// <param name="flightId">Нислэгийн ID</param>
+        /// <param name="seatNumber">Суудлын дугаар</param>
+        /// <param name="passengerId">Зорчигчийн ID</param>
         public async Task NotifySeatAssignedAsync(int flightId, string seatNumber, int passengerId)
         {
-            Console.WriteLine($"Нислэг ID: {flightId}, {seatNumber} суудал зорчигч ID: {passengerId}-д хуваарилагдлаа");
+            Console.WriteLine($"========== SENDING SEAT ASSIGNMENT NOTIFICATION ===========");
+            Console.WriteLine($"NotificationService: Flight ID: {flightId}, Seat: {seatNumber}, Passenger ID: {passengerId}");
+            
+            try
+            {
+                // Синглтон WebSocketServer объект авах
+                WebSocketServer instance = WebSocketServer.Instance;
+                
+                // WebSocket ашиглан мэдэгдэл илгээх
+                if (instance.HasStarted)
+                {
+                    Console.WriteLine("Sending notification using WebSocket...");
+                    instance.NotifySeatAssigned(flightId, seatNumber, passengerId);
+                    Console.WriteLine("WebSocket notification sent successfully");
+                }
+                else
+                {
+                    Console.WriteLine("WARNING: WebSocket server is not available, initializing...");
+                    InitializeWebSocketServer();
+                    
+                    // Хэрэв серверийг шинээр эхлүүлсэн бол дахин илгээх оролдлого хийх
+                    if (instance.HasStarted)
+                    {
+                        Console.WriteLine("Retrying notification after WebSocket initialization...");
+                        instance.NotifySeatAssigned(flightId, seatNumber, passengerId);
+                        Console.WriteLine("WebSocket notification sent successfully after retry");
+                    }
+                    else
+                    {
+                        Console.WriteLine("ERROR: Failed to initialize WebSocket server, notification not sent");
+                    }
+                }
+                
+                // SignalR ашиглан мэдэгдэл илгээх (опшнл)
+                if (_defaultTarget == NotificationTarget.Both || _defaultTarget == NotificationTarget.SignalR)
+                {
+                    if (_hubConnection != null && _hubConnection.State == HubConnectionState.Connected)
+                    {
+                        Console.WriteLine("Sending seat assignment via SignalR as well...");
+                        await _hubConnection.SendAsync("NotifySeatAssigned", flightId, seatNumber, passengerId);
+                        Console.WriteLine("SignalR notification for seat assignment sent");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ERROR: Failed to send seat assignment notification: {ex.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+            }
             
             await Task.CompletedTask;
         }
-        
-        // public async Task NotifyPassengerRegisteredAsync(int flightId, int passengerId){     Console.WriteLine($"Зорчигч ID: {passengerId} нь нислэг ID: {flightId} дээр бүртгэгдлээ");     await Task.CompletedTask;}
-        // public async Task NotifyPassengerUnregisteredAsync(int flightId, int passengerId){     Console.WriteLine($"Зорчигч ID: {passengerId} нь нислэг ID: {flightId} дээр хасагдлаа");     await Task.CompletedTask;}
+    }
+    
+    public enum NotificationTarget
+    {
+        WebSocket,
+        SignalR,
+        Both
     }
 }

@@ -66,15 +66,31 @@ namespace BusinessLogic.Services
             if (existingFlight == null)
                 throw new KeyNotFoundException($"Flight with ID {flight.Id} not found.");
                 
-            var statusChanged = existingFlight.Status != flight.Status;
+            // Дэлгэрэнгүй лог хийх
+            var oldStatus = existingFlight.Status;
+            var newStatus = flight.Status;
+            var statusChanged = oldStatus != newStatus;
             
-            await _flightRepository.UpdateAsync(flight);
+            Console.WriteLine($"FlightService: Flight ID {flight.Id} status check: Old={oldStatus}, New={newStatus}, Changed={statusChanged}");
+            
+            existingFlight.Status = newStatus; 
+            
+            existingFlight.FlightNumber = flight.FlightNumber;
+            existingFlight.DepartureCity = flight.DepartureCity;
+            existingFlight.ArrivalCity = flight.ArrivalCity;
+            existingFlight.DepartureTime = flight.DepartureTime;
+            existingFlight.ArrivalTime = flight.ArrivalTime;
+            existingFlight.AvailableSeats = flight.AvailableSeats;
+            
+            await _flightRepository.UpdateAsync(existingFlight);
             await _flightRepository.SaveChangesAsync();
             
-            if (statusChanged)
-            {
-                await _notificationService.NotifyFlightStatusChangedAsync(flight.Id, flight.Status);
-            }
+            Console.WriteLine($"FlightService: Flight {flight.Id} successfully updated in database");
+            
+            // Өөрчлөлт хийгдэх бүрт заавал мэдэгдэл илгээх (төлөв өөрчлөгдсөн эсэхээс үл хамааран)
+            Console.WriteLine($"FlightService: Sending notification for flight {flight.Id} status: {newStatus}");
+            await _notificationService.NotifyFlightStatusChangedAsync(flight.Id, flight.Status);
+            Console.WriteLine($"FlightService: Notification sent successfully");
         }
 
         public async Task DeleteFlightAsync(int id)

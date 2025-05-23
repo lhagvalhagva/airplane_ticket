@@ -1,0 +1,316 @@
+@using FlightDashboard.Models
+@using FlightDashboard.Services
+@using Microsoft.AspNetCore.SignalR.Client
+@inject IFlightService FlightService
+@inject NavigationManager NavigationManager
+@implements IAsyncDisposable
+
+<div class="dashboard-container">
+    <h1 class="dashboard-title">НИСЛЭГИЙН МЭДЭЭЛЭЛ</h1>
+
+    @if (flights == null)
+    {
+        <div class="loading-container">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Ачааллаж байна...</span>
+            </div>
+            <p>Мэдээлэл ачааллаж байна...</p>
+        </div>
+    }
+    else if (!flights.Any())
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle-fill me-2"></i> Нислэгийн мэдээлэл олдсонгүй.
+        </div>
+    }
+    else
+    {
+        <div class="card flight-card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Нислэгийн дугаар</th>
+                                <th>Чиглэл</th>
+                                <th>Хөөрөх цаг</th>
+                                <th>Буух цаг</th>
+                                <th>Төлөв</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var flight in flights)
+                            {
+                                <tr class="@GetRowClass(flight.Status)">
+                                    <td class="fw-bold">@flight.FlightNumber</td>
+                                    <td>
+                                        <div class="flight-route">
+                                            <span class="departure">@flight.DepartureCity</span>
+                                            <span class="route-arrow">→</span>
+                                            <span class="arrival">@flight.ArrivalCity</span>
+                                        </div>
+                                    </td>
+                                    <td>@FormatDateTime(flight.DepartureTime)</td>
+                                    <td>@FormatDateTime(flight.ArrivalTime)</td>
+                                    <td><span class="status-badge @GetStatusBadgeClass(flight.Status)">@GetStatusText(flight.Status)</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="refresh-info mt-3 text-end">
+            <small class="text-muted">Сүүлийн шинэчлэл: @DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")</small>
+            <button class="btn btn-sm btn-outline-primary ms-2" @onclick="RefreshData">
+                <i class="bi bi-arrow-clockwise"></i> Шинэчлэх
+            </button>
+            @if (isConnected)
+            {
+                <span class="badge bg-success ms-2">SignalR Connected</span>
+            }
+            else
+            {
+                <span class="badge bg-danger ms-2">SignalR Disconnected</span>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .dashboard-title {
+        font-size: 28px;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 30px;
+        color: #2c3e50;
+        letter-spacing: 1px;
+    }
+
+    .flight-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .flight-route {
+        display: flex;
+        align-items: center;
+    }
+
+    .route-arrow {
+        margin: 0 10px;
+        color: #6c757d;
+    }
+
+    .departure {
+        font-weight: 600;
+        color: #3498db;
+    }
+
+    .arrival {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        display: inline-block;
+        min-width: 100px;
+        text-align: center;
+    }
+
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 200px;
+    }
+
+    .refresh-info {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+</style>
+
+@code {
+    private List<Flight> flights;
+    private HubConnection hubConnection;
+    private string connectionStatus = "Холбогдож байна...";
+    private bool isConnected = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshData();
+        await InitializeSignalRConnection();
+    }
+
+    private async Task InitializeSignalRConnection()
+    {
+        try
+        {
+            // SignalR хабтай холбогдох
+            hubConnection = new HubConnectionBuilder()
+                .WithUrl(NavigationManager.ToAbsoluteUri("http://localhost:5000/flightHub"))
+                .WithAutomaticReconnect()
+                .Build();
+
+            // Төлөв өөрчлөгдөх үед дуудагдах handler
+            hubConnection.On<int, int>("FlightStatusChanged", async (flightId, statusValue) => 
+            {
+                Console.WriteLine($"Client handler called for FlightStatusChanged: {flightId}, {statusValue}");
+                await HandleFlightStatusChanged(flightId, statusValue);
+            });
+            
+            // Холболтын төлөв өөрчлөгдөх үед дуудагдах handler
+            hubConnection.Closed += async (error) => 
+            {
+                connectionStatus = "Холболт салсан";
+                isConnected = false;
+                StateHasChanged();
+                
+                await Task.Delay(5000); // 5 секундын дараа дахин холбогдох оролдлого хийнэ
+                await hubConnection.StartAsync();
+            };
+
+            // Холболт амжилттай тохиолдолд дуудагдах handler
+            hubConnection.On<string>("Connected", (message) => 
+            {
+                connectionStatus = message;
+                isConnected = true;
+                StateHasChanged();
+            });
+
+            // Холболт эхлүүлэх
+            await hubConnection.StartAsync();
+            connectionStatus = "Амжилттай холбогдлоо";
+            isConnected = true;
+            Console.WriteLine("SignalR connection started successfully in Flights.razor!");
+            await RefreshData();
+        }
+        catch (Exception ex)
+        {
+            connectionStatus = $"Холболтын алдаа: {ex.Message}";
+            isConnected = false;
+        }
+    }
+
+    // Нислэгийн төлөв өөрчлөгдөхөд дуудагдах функц
+    private async Task HandleFlightStatusChanged(int flightId, int statusValue)
+    {
+        Console.WriteLine($"========== NOTIFICATION RECEIVED ON DASHBOARD ===========");
+        Console.WriteLine($"Flights.razor: Flight ID: {flightId}, new status: {statusValue}");
+        
+        try {
+            // Convert status value to enum
+            FlightStatus newStatus = (FlightStatus)statusValue;
+            Console.WriteLine($"Enum status: {newStatus}");
+            
+            // Find the flight in the list
+            var flight = flights.FirstOrDefault(f => f.Id == flightId);
+            Console.WriteLine($"Found flight: {(flight != null ? $"ID={flight.Id}, FlightNumber={flight.FlightNumber}" : "null")}");
+            
+            if (flight != null)
+            {
+                Console.WriteLine($"Previous status: {flight.Status}, New status: {newStatus}");
+                // Update flight status
+                flight.Status = newStatus;
+                
+                // Update UI
+                Console.WriteLine("Calling StateHasChanged...");
+                StateHasChanged();
+                Console.WriteLine("StateHasChanged called");
+                
+                // Could show animation effect or notification
+                // await JS.InvokeVoidAsync("highlightRow", flightId);
+            }
+            else
+            {
+                Console.WriteLine($"WARNING: Flight with ID={flightId} not found!");
+                // Refresh data if flight not found
+                await RefreshData();
+            }
+        }
+        catch (Exception ex) {
+            Console.WriteLine($"Error occurred: {ex.Message}");
+        }
+    }
+
+    private async Task RefreshData()
+    {
+        try
+        {
+            Console.WriteLine("Refreshing flight information...");
+            flights = await FlightService.GetAllFlightsAsync();
+            Console.WriteLine($"Total {flights?.Count ?? 0} flights loaded");
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading flight information: {ex.Message}");
+        }
+    }
+
+    private string GetRowClass(FlightStatus status)
+    {
+        return status switch
+        {
+            FlightStatus.Cancelled => "table-danger",
+            FlightStatus.Landed => "table-success",
+            FlightStatus.Departed => "table-primary",
+            FlightStatus.Boarding => "table-info",
+            _ => ""
+        };
+    }
+
+    private string GetStatusBadgeClass(FlightStatus status)
+    {
+        return status switch
+        {
+            FlightStatus.Scheduled => "bg-secondary",
+            FlightStatus.Boarding => "bg-info text-white",
+            FlightStatus.Departed => "bg-primary text-white", 
+            FlightStatus.Landed => "bg-success text-white",
+            FlightStatus.Cancelled => "bg-danger text-white",
+            _ => "bg-secondary text-white"
+        };
+    }
+    
+    private string GetStatusText(FlightStatus status)
+    {
+        return status switch
+        {
+            FlightStatus.Scheduled => "Товлосон",
+            FlightStatus.Boarding => "Суух эхэлсэн",
+            FlightStatus.Departed => "Хөөрсөн", 
+            FlightStatus.Landed => "Газардсан",
+            FlightStatus.Cancelled => "Цуцлагдсан",
+            _ => status.ToString()
+        };
+    }
+    
+    private string FormatDateTime(DateTime dateTime)
+    {
+        return $"{dateTime:yyyy-MM-dd}\n{dateTime:HH:mm}";
+    }
+    
+    // IAsyncDisposable интерфейсийн шаардлагын дагуу хаах функц
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}

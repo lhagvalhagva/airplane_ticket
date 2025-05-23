@@ -69,10 +69,8 @@ namespace RestApi.Controllers
         {
             try
             {
-                // Add the flight first
                 await _flightService.AddFlightAsync(flight);
 
-                // Initialize seats for the flight
                 var seats = new List<Seat>();
                 for (int i = 1; i <= flight.AvailableSeats; i++)
                 {
@@ -84,7 +82,6 @@ namespace RestApi.Controllers
                     });
                 }
 
-                // Add all seats
                 foreach (var seat in seats)
                 {
                     await _seatService.AddSeatAsync(seat);
@@ -150,17 +147,30 @@ namespace RestApi.Controllers
         {
             try
             {
+                // Нислэгийн дэлгэрэнгүй мэдээллийг авах
                 var flight = await _flightService.GetFlightByIdAsync(id);
                 if (flight == null)
                     return NotFound($"Нислэг ID {id} олдсонгүй");
+                
+                // Хуучин төлөвийг хадгалж, лог хийх
+                var oldStatus = flight.Status;
+                Console.WriteLine($"===== CONTROLLER: Flight ID: {id} status changing from {oldStatus} to {status} =====");
 
+                // Шинэ төлөв оноох, хуучин нислэгийн объектыг шууд ашиглана
                 flight.Status = status;
+                
+                // FlightService-т заавал өөрчлөлт илрүүлэх методыг дуудах
+                // 1. ForceUpdate = true параметр нэмэх боломжтой бол хэрэглэнэ
+                // 2. Эсвэл дараах арга замаар зөвхөн төлөв шинэчлэх
+                Console.WriteLine($"Setting status to {status} for flight {flight.Id} directly");
                 await _flightService.UpdateFlightAsync(flight);
-
+                
+                Console.WriteLine($"===== CONTROLLER: Flight status update completed for ID: {id} =====");
                 return Ok(status);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"CONTROLLER ERROR: {ex.Message}");
                 return BadRequest(ex.Message);
             }
         }

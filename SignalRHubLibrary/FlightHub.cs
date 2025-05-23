@@ -1,23 +1,52 @@
 using Microsoft.AspNetCore.SignalR;
+using System;
 using System.Threading.Tasks;
+using System.Text.Json;
+using System.Linq;
 
 namespace SignalRHubLibrary
 {
     public class FlightHub : Hub
     {
-        public async Task JoinFlightGroup(string flightNumber)
+        /// <summary>
+        /// Нислэгийн төлөв өөрчлөгдсөн үед клиентүүдэд мэдэгдэх
+        /// </summary>
+        /// <param name="flightId">Нислэгийн ID</param>
+        /// <param name="status">Шинэ төлөвийн тоон утга</param>
+        public async Task NotifyFlightStatusChanged(int flightId, int status)
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, flightNumber);
+            Console.WriteLine($"========== FLIGHT STATUS CHANGED ===========");
+            Console.WriteLine($"FlightHub: Flight ID: {flightId}, new status: {status}");
+            Console.WriteLine($"Connected clients count: {Clients.All.ToString()}");
+
+            try 
+            {
+                // Notify all clients
+                await Clients.All.SendAsync("FlightStatusChanged", flightId, status);
+                Console.WriteLine($"Notification sent successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending notification: {ex.Message}");
+            }
         }
 
-        public async Task LeaveFlightGroup(string flightNumber)
+        /// <summary>
+        /// Тодорхой нислэгийн мэдээллийг хүлээн авах бүлэгт нэгдэх
+        /// </summary>
+        /// <param name="flightId">Нислэгийн ID</param>
+        public async Task JoinFlightGroup(int flightId)
         {
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, flightNumber);
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"flight_{flightId}");
         }
 
-        public async Task UpdateFlightStatus(string flightNumber, string status)
+        /// <summary>
+        /// Холболтын үед дуудагдах callback
+        /// </summary>
+        public override async Task OnConnectedAsync()
         {
-            await Clients.Group(flightNumber).SendAsync("FlightStatusUpdated", flightNumber, status);
+            await Clients.Caller.SendAsync("Connected", "Нислэгийн мэдээллийн серверт амжилттай холбогдлоо");
+            await base.OnConnectedAsync();
         }
     }
 }

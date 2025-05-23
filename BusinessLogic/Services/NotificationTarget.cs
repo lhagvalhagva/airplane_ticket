@@ -1,9 +1,9 @@
-namespace BusinessLogic.Services
-{
-    public enum NotificationTarget
-    {
-        SignalR,
-        WebSocket,
-        Both
-    }
-}
+// namespace BusinessLogic.Services
+// {
+//     public enum NotificationTarget
+//     {
+//         SignalR,
+//         WebSocket,
+//         Both
+//     }
+// }

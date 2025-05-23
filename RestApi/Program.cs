@@ -5,7 +5,8 @@ using BusinessLogic.Services;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.ResponseCompression;
-using RestApi.Hubs;
+using Microsoft.AspNetCore.SignalR;
+using SignalRHubLibrary;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +18,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configure CORS
+// Configure CORS with explicit WebSocket support
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -27,7 +28,8 @@ builder.Services.AddCors(options =>
                 .SetIsOriginAllowed(_ => true) // Allow any origin for testing
                 .AllowAnyMethod()
                 .AllowAnyHeader()
-                .AllowCredentials();
+                .AllowCredentials()
+                .WithExposedHeaders("X-Requested-With");
         });
 });
 
@@ -45,15 +47,23 @@ builder.Services.AddScoped<IPassengerService, PassengerService>();
 builder.Services.AddScoped<ISeatService, SeatService>();
 builder.Services.AddScoped<IFlightPassengerService, FlightPassengerService>();
 
-// Add SignalR service
-// builder.Services.AddSignalR();
-
 // Add Response Compression Middleware
 builder.Services.AddResponseCompression(opts =>
 {
     opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
         ["application/octet-stream"]);
 });
+
+// Add SignalR with improved stability configuration
+builder.Services.AddSignalR(options => {
+    // Increase timeout settings to prevent disconnects
+    options.ClientTimeoutInterval = TimeSpan.FromMinutes(2);
+    options.KeepAliveInterval = TimeSpan.FromMinutes(1);
+    // Enable detailed error reporting
+    options.EnableDetailedErrors = true;
+});
+
+// DO NOT manually register IHubContext - it's automatically provided by AddSignalR
 
 var app = builder.Build();
 
@@ -73,6 +83,11 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapHub<FlightHub>("/flighthub");
+// Configure SignalR Hub
+app.MapHub<FlightHub>("/flightHub");
+
+// Урд төлөвлөсөн порт дээр ажиллуулах
+app.Urls.Add("http://localhost:5000");
+app.Urls.Add("http://localhost:5027");
 
 app.Run();

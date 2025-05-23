@@ -9,6 +9,7 @@ using System.Windows.Threading;
 using AirplaneTicket.WPF.Models;
 using AirplaneTicket.WPF.Services;
 using System.Net.Http;
+using System.ComponentModel;
 
 namespace AirplaneTicket.WPF.Pages
 {
@@ -21,6 +22,7 @@ namespace AirplaneTicket.WPF.Pages
         private HashSet<string> availableSeats = new HashSet<string>();
         private Passenger? currentPassenger = null;
         private readonly AirplaneService _airplaneService;
+        private readonly WebSocketClient _webSocketClient;
         private int currentFlightId = 1;
         private List<Flight> flights = new List<Flight>();
         private DispatcherTimer toastTimer;
@@ -37,6 +39,14 @@ namespace AirplaneTicket.WPF.Pages
         {
             InitializeComponent();
             _airplaneService = new AirplaneService();
+            
+            // WebSocket клиент үүсгэх
+            _webSocketClient = new WebSocketClient("localhost", 9009);
+            _webSocketClient.Connected += WebSocketClient_Connected;
+            _webSocketClient.Disconnected += WebSocketClient_Disconnected;
+            _webSocketClient.ErrorOccurred += WebSocketClient_ErrorOccurred;
+            _webSocketClient.SeatAssigned += WebSocketClient_SeatAssigned;
+            
             Loaded += RegistrationCheckInPage_Loaded;
             SearchButton.Click += SearchButton_Click;
             FlightStatusComboBox.SelectionChanged += FlightStatusComboBox_SelectionChanged;
@@ -67,6 +77,18 @@ namespace AirplaneTicket.WPF.Pages
             try
             {
                 ShowLoading(true);
+                
+                // WebSocket серверт холбогдох
+                try
+                {
+                    await _webSocketClient.ConnectAsync();
+                }
+                catch (Exception wsEx)
+                {
+                    // WebSocket холболт амжилтгүй болсон ч үндсэн функционал ажиллах боломжтой учир зөвхөн лог хийнэ
+                    Console.WriteLine($"WebSocket серверт холбогдоход алдаа гарлаа: {wsEx.Message}");
+                }
+                
                 await LoadFlightsAsync();
                 if (flights != null && flights.Count > 0)
                 {
@@ -386,7 +408,6 @@ namespace AirplaneTicket.WPF.Pages
                         
                         if (_selectedSeatButton != null)
                         {
-                            // Өмнө сонгогдсон суудлын өнгийг буцаах
                             var prevSeat = seatList.FirstOrDefault(s => s.SeatNumber == _selectedSeatButton.Content.ToString());
                             _selectedSeatButton.Background = prevSeat != null && prevSeat.IsOccupied ? Brushes.Red : Brushes.Green;
                         }
@@ -654,5 +675,165 @@ private async void FlightStatusComboBox_SelectionChanged(object sender, Selectio
                 }
             }
         }
+
+        #region WebSocket Event Handlers
+        
+        /// <summary>
+        /// WebSocket серверт холбогдсон үед дуудагдах handler
+        /// </summary>
+        private void WebSocketClient_Connected(object sender, EventArgs e)
+        {
+            // UI дээр холбогдсон статус харуулах (шаардлагатай бол)
+            Console.WriteLine("WebSocket серверт амжилттай холбогдлоо");
+            ShowToast("Бодит цагийн мэдэгдэл хүлээн авах холболт амжилттай", "success");
+        }
+        
+        /// <summary>
+        /// WebSocket серверээс салгагдсан үед дуудагдах handler
+        /// </summary>
+        private void WebSocketClient_Disconnected(object sender, EventArgs e)
+        {
+            Console.WriteLine("WebSocket серверээс салгагдлаа");
+            
+            // Серверээс салгагдсан тухай мэдэгдэл харуулах
+            ShowToast("Бодит цагийн мэдэгдэл авах боломжгүй болсон", "warning");
+            
+            // Дахин холбогдох оролдлого хийх (шаардлагатай бол)
+            Task.Run(async () =>
+            {
+                await Task.Delay(5000);
+                try
+                {
+                    await _webSocketClient.ConnectAsync();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Дахин холбогдоход алдаа гарлаа: {ex.Message}");
+                }
+            });
+        }
+        
+        /// <summary>
+        /// WebSocket-д алдаа гарсан үед дуудагдах handler
+        /// </summary>
+        private void WebSocketClient_ErrorOccurred(object sender, string errorMessage)
+        {
+            Console.WriteLine($"WebSocket алдаа: {errorMessage}");
+            
+            // Хэрэглэгчид алдааны мэдэгдэл харуулах (шаардлагатай бол)
+            // ShowToast($"Бодит цагийн мэдэгдэл авахад алдаа гарлаа: {errorMessage}", "error");
+        }
+        
+        /// <summary>
+        /// Суудал оноолтын мэдэгдэл ирсэн үед дуудагдах handler
+        /// </summary>
+        private async void WebSocketClient_SeatAssigned(object sender, SeatAssignedEventArgs e)
+        {
+            try
+            {
+                // Хэрэв одоо харж буй нислэгт хамааралтай мэдэгдэл ирвэл UI шинэчлэх
+                if (e.FlightId == currentFlightId)
+                {
+                    Console.WriteLine($"Одоогийн нислэгт суудал оноолтын мэдэгдэл хүлээн авлаа: {e.SeatNumber}");
+                    
+                    // Хэрэглэгчид мэдэгдэл харуулах
+                    ShowToast($"{e.SeatNumber} суудал оноогдлоо", "info");
+                    
+                    // Суудлын төлөвийг шинэчлэх
+                    await RefreshSeatStatusAsync();
+                    
+                    // Зорчигчдын жагсаалтыг шинэчлэх
+                    await LoadPassengersAsync();
+                }
+                else
+                {
+                    // Өөр нислэгт хамаатай мэдэгдэл
+                    Console.WriteLine($"Өөр нислэгт суудал оноолтын мэдэгдэл хүлээн авлаа: Нислэг {e.FlightId}, Суудал {e.SeatNumber}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Суудал оноолтын мэдэгдэл боловсруулахад алдаа гарлаа: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// Суудлын төлөв байдлыг серверээс шинээр авч шинэчлэх
+        /// </summary>
+        private async Task RefreshSeatStatusAsync()
+        {
+            try
+            {
+                // Серверээс суудлын мэдээлэл авах
+                var seats = await _airplaneService.GetFlightSeatsAsync(currentFlightId);
+                if (seats == null)
+                {
+                    ShowToast("Суудлын мэдээлэл авахад алдаа гарлаа", "error");
+                    return;
+                }
+                
+                // Боломжтой суудлуудын жагсаалтыг шинэчлэх
+                availableSeats.Clear();
+                foreach (var seat in seats.Where(s => !s.IsOccupied))
+                {
+                    availableSeats.Add(seat.SeatNumber);
+                }
+                
+                // Суудлын товчнуудын төлөв байдлыг шинэчлэх
+                UpdateSeatsUI();
+                
+                Console.WriteLine($"Суудлын төлөв амжилттай шинэчлэгдлээ, {availableSeats.Count} суудал боломжтой");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Суудлын төлөв шинэчлэхэд алдаа гарлаа: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// Суудлын UI төлөвийг шинэчлэх
+        /// </summary>
+        private void UpdateSeatsUI()
+        {
+            for (int row = 0; row < Rows; row++)
+            {
+                for (int col = 0; col < Columns; col++)
+                {
+                    Button button = seatButtons[row, col];
+                    string seatNumber = GetSeatNumber(row, col);
+                    
+                    // Суудал боломжтой бол ногоон, биш бол улаан өнгөтэй харуулах
+                    if (availableSeats.Contains(seatNumber))
+                    {
+                        button.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.LightGreen);
+                        button.IsEnabled = currentPassenger != null; // Зөвхөн зорчигч сонгогдсон үед суудал сонгох боломжтой
+                    }
+                    else
+                    {
+                        button.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.LightCoral);
+                        button.IsEnabled = false;
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Мөр ба баганаас суудлын дугаар буцаах (1A, 2B г.м.)
+        /// </summary>
+        /// <param name="row">Мөрийн дугаар (0-9)</param>
+        /// <param name="col">Баганын дугаар (0-5)</param>
+        /// <returns>Суудлын дугаар текстээр (1A, 2B г.м.)</returns>
+        private string GetSeatNumber(int row, int col)
+        {
+            // Мөрийн дугаар нь 0-ээс эхэлдэг учир +1 хийж үзүүлэх
+            int rowNumber = row + 1;
+            
+            // Баганын дугаарыг үсэг болгох (0=A, 1=B, 2=C, 3=D, 4=E, 5=F)
+            char colLetter = (char)('A' + col);
+            
+            return $"{rowNumber}{colLetter}";
+        }
+        
+        #endregion
     }
 }

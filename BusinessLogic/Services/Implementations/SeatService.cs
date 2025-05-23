@@ -49,33 +49,27 @@ namespace BusinessLogic.Services
 
         public async Task<bool> AssignSeatAsync(int flightId, int passengerId, int seatId)
         {
-            // Нислэгийн байгаа эсэхийг шалгах
             var flight = await _flightRepository.GetByIdAsync(flightId);
             if (flight == null)
                 throw new KeyNotFoundException($"Нислэг ID {flightId} олдсонгүй.");
 
-            // Зорчигчийн байгаа эсэхийг шалгах
             var passenger = await _passengerRepository.GetByIdAsync(passengerId);
             if (passenger == null)
                 throw new KeyNotFoundException($"Зорчигч ID {passengerId} олдсонгүй.");
 
-            // Зорчигч нислэгт бүртгэлтэй эсэхийг шалгах
             var flightPassenger = (await _flightPassengerRepository.FindAsync(
                 fp => fp.FlightId == flightId && fp.PassengerId == passengerId)).FirstOrDefault();
                 
             if (flightPassenger == null)
                 throw new InvalidOperationException($"Зорчигч ID {passengerId} нь нислэг ID {flightId} дээр бүртгүүлээгүй байна.");
 
-            // Суудлын байгаа эсэхийг шалгах
             var seat = await _seatRepository.GetByIdAsync(seatId);
             if (seat == null)
                 throw new KeyNotFoundException($"Суудал ID {seatId} олдсонгүй.");
                 
-            // Суудал нислэгт хамаарах эсэхийг шалгах
             if (seat.FlightId != flightId)
                 throw new InvalidOperationException($"Суудал ID {seatId} нь нислэг ID {flightId} дээр хамаарахгүй байна.");
 
-            // Суудал захиалагдсан эсэхийг шалгах
             if (seat.IsOccupied)
                 throw new InvalidOperationException($"Суудал {seat.SeatNumber} аль хэдийн захиалагдсан байна.");
 
@@ -95,7 +89,7 @@ namespace BusinessLogic.Services
             await _passengerRepository.UpdateAsync(passenger);
             await _seatRepository.SaveChangesAsync();
             await _passengerRepository.SaveChangesAsync();
-            
+
             await _notificationService.NotifySeatAssignedAsync(flightId, seat.SeatNumber, passengerId);
 
             return true;
