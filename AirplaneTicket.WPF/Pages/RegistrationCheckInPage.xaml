@@ -8,6 +8,62 @@
       d:DesignHeight="720" d:DesignWidth="1280"
       Title="Registration and Check-in">
 
+    <!-- Styles -->
+    <Page.Resources>
+        <Style x:Key="ToastStyle" TargetType="Border">
+            <Setter Property="Background" Value="#323232"/>
+            <Setter Property="CornerRadius" Value="5"/>
+            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Bottom"/>
+            <Setter Property="Margin" Value="0,0,0,20"/>
+        </Style>
+        
+        <Style x:Key="InfoBoxStyle" TargetType="Border">
+            <Setter Property="Background" Value="#F8F9FA"/>
+            <Setter Property="CornerRadius" Value="5"/>
+            <Setter Property="Padding" Value="15"/>
+            <Setter Property="Margin" Value="0,0,0,20"/>
+        </Style>
+        
+        <Style x:Key="PanelStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Margin" Value="10"/>
+            <Setter Property="BorderBrush" Value="#DDDDDD"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        
+        <Style x:Key="ActionButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#007BFF"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Width" Value="150"/>
+        </Style>
+        
+        <Style x:Key="SearchFieldStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        
+        <!-- Placeholder style for passport number textbox -->
+        <Style x:Key="PlaceholderTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource SearchFieldStyle}">
+            <Style.Resources>
+                <VisualBrush x:Key="PlaceholderBrush" TileMode="None" Opacity="0.5" Stretch="None" AlignmentX="Left" AlignmentY="Center">
+                    <VisualBrush.Visual>
+                        <TextBlock Text="Паспортын дугаар"/>
+                    </VisualBrush.Visual>
+                </VisualBrush>
+            </Style.Resources>
+            <Style.Triggers>
+                <Trigger Property="Text" Value="">
+                    <Setter Property="Background" Value="{StaticResource PlaceholderBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Page.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -21,13 +77,8 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Left Side - Flight Selection -->
-            <Border Grid.Column="0" 
-                    Background="White" 
-                    CornerRadius="10" 
-                    Margin="0,0,10,0"
-                    BorderBrush="#DDDDDD"
-                    BorderThickness="1">
+            <!-- Left Side - Passenger Search and Selection -->
+            <Border Grid.Column="0" Style="{StaticResource PanelStyle}" Margin="0,0,10,0">
                 <Grid Margin="20">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -48,44 +99,18 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBox x:Name="PassportNumberTextBox" 
-                                   Height="40" 
-                                   Margin="0,0,10,0"
-                                   Padding="10,0"
-                                   VerticalContentAlignment="Center">
-                                <TextBox.Style>
-                                    <Style TargetType="TextBox">
-                                        <Style.Resources>
-                                            <VisualBrush x:Key="PlaceholderBrush" TileMode="None" Opacity="0.5" Stretch="None" AlignmentX="Left" AlignmentY="Center">
-                                                <VisualBrush.Visual>
-                                                    <TextBlock Text="Паспортын дугаар"/>
-                                                </VisualBrush.Visual>
-                                            </VisualBrush>
-                                        </Style.Resources>
-                                        <Style.Triggers>
-                                            <Trigger Property="Text" Value="">
-                                                <Setter Property="Background" Value="{StaticResource PlaceholderBrush}"/>
-                                            </Trigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBox.Style>
-                            </TextBox>
+                                   Style="{StaticResource PlaceholderTextBoxStyle}"
+                                   Margin="0,0,10,0"/>
                             <Button x:Name="SearchButton" 
                                   Grid.Column="1"
                                   Content="Хайх" 
-                                  Height="40" 
-                                  Width="100"
-                                  Background="#007BFF"
-                                  Foreground="White"
-                                  Click="SearchButton_Click"/>
+                                  Style="{StaticResource ActionButtonStyle}"
+                                  Width="100"/>
                         </Grid>
                     </StackPanel>
 
                     <!-- Passenger Info -->
-                    <Border Grid.Row="2" 
-                            Background="#F8F9FA" 
-                            CornerRadius="5" 
-                            Padding="15"
-                            Margin="0,0,0,20">
+                    <Border Grid.Row="2" Style="{StaticResource InfoBoxStyle}">
                         <StackPanel>
                             <TextBlock x:Name="PassengerNameText" 
                                      FontSize="16" 
@@ -100,41 +125,44 @@
                     </Border>
 
                     <!-- Registered Passengers List -->
-                    <Border Grid.Row="3" 
-                            Background="#F8F9FA" 
-                            CornerRadius="5" 
-                            Padding="15">
+                    <Border Grid.Row="3" Style="{StaticResource InfoBoxStyle}" Margin="0">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <TextBlock Text="Бүртгэлтэй зорчигчид" 
+                            <TextBlock Text="Бүртгэлтэй зорчигчид - Сонгоод суудал оноох" 
                                      FontSize="16" 
                                      FontWeight="SemiBold" 
                                      Margin="0,0,0,10"/>
-                            <ListView x:Name="PassengerList" Grid.Row="1" Margin="0,10,0,0" 
-                                      SelectionChanged="PassengerList_SelectionChanged">
+                            <ListView x:Name="PassengerList" Grid.Row="1" Margin="0,10,0,0" SelectionChanged="PassengerList_SelectionChanged">
                                 <ListView.View>
                                     <GridView>
-                                        <GridViewColumn Header="Нэр" DisplayMemberBinding="{Binding FullName}"/>
-                                        <GridViewColumn Header="Паспортын дугаар" DisplayMemberBinding="{Binding PassportNumber}"/>
-                                        <GridViewColumn Header="Суудал" DisplayMemberBinding="{Binding SeatNumber}"/>
+                                        <GridViewColumn Header="Нэр" DisplayMemberBinding="{Binding FullName}" Width="140"/>
+                                        <GridViewColumn Header="Паспортын дугаар" DisplayMemberBinding="{Binding PassportNumber}" Width="120"/>
+                                        <GridViewColumn Header="Суудал" DisplayMemberBinding="{Binding SeatNumber}" Width="80"/>
                                     </GridView>
                                 </ListView.View>
+                                <ListView.ItemContainerStyle>
+                                    <Style TargetType="ListViewItem">
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                        <Setter Property="Padding" Value="8,5" />
+                                        <Setter Property="Cursor" Value="Hand" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#E3F2FD" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListView.ItemContainerStyle>
                             </ListView>
                         </Grid>
                     </Border>
                 </Grid>
             </Border>
 
-            <!-- Right Side - Seat Map -->
-            <Border Grid.Column="1" 
-                    Background="White" 
-                    CornerRadius="10" 
-                    Margin="10,0,0,0"
-                    BorderBrush="#DDDDDD"
-                    BorderThickness="1">
+            <!-- Right Side - Flight Selection and Seat Map -->
+            <Border Grid.Column="1" Style="{StaticResource PanelStyle}" Margin="10,0,0,0">
                 <Grid Margin="20">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -144,14 +172,14 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Flight Selection (moved here) -->
+                    <!-- Flight Selection -->
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
                         <ComboBox x:Name="FlightComboBox" Width="200" Margin="0,0,20,0"/>
                         <ComboBox x:Name="FlightStatusComboBox" Width="150"/>
                     </StackPanel>
 
                     <!-- Flight Info Box -->
-                    <Border Grid.Row="1" Background="#F8F9FA" CornerRadius="5" Padding="10" Margin="0,0,0,10">
+                    <Border Grid.Row="1" Style="{StaticResource InfoBoxStyle}">
                         <StackPanel>
                             <TextBlock x:Name="FlightInfoNumber" FontWeight="Bold"/>
                             <TextBlock x:Name="FlightInfoRoute"/>
@@ -160,53 +188,25 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Seat Map Title -->
-                    <TextBlock Grid.Row="2" Text="Суудлын план зураг" 
-                             FontSize="18" 
-                             FontWeight="SemiBold" 
-                             Margin="0,0,0,40"/>
-
-                    <!-- Seat Map Grid -->
-                    <Grid x:Name="SeatMapGrid" Grid.Row="2">
-                        <!-- Grid will be populated in code-behind -->
+                    <!-- Seat Map -->
+                    <Grid Grid.Row="2">
+                        <TextBlock Text="Суудлын план зураг" 
+                                FontSize="18" 
+                                FontWeight="SemiBold" 
+                                VerticalAlignment="Top"/>
+                        
+                        <!-- Seat Map Grid -->
+                        <Grid x:Name="SeatMapGrid" Margin="0,40,0,0"/>
                     </Grid>
 
-                    <!-- Action Buttons Row -->
+                    <!-- Action Buttons -->
                     <Grid Grid.Row="3" Margin="0,20,0,20">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        
-                        <!-- Submit Button -->
                         <Button x:Name="SubmitButton" 
-                                Grid.Column="0"
                                 Content="Суудал оноох" 
-                                Height="40"
+                                Style="{StaticResource ActionButtonStyle}"
                                 Width="200"
-                                Margin="0,0,5,0"
-                                Background="#007BFF"
-                                Foreground="White"
-                                Click="SubmitButton_Click"
+                                HorizontalAlignment="Left"
                                 IsEnabled="False"/>
-                                
-                        <!-- Transfer Button -->
-                        <StackPanel Grid.Column="1">
-                            <Button x:Name="TransferButton" 
-                                    Content="Суудал шилжүүлэх" 
-                                    Height="40"
-                                    Width="200"
-                                    Margin="5,0,0,5"
-                                    Background="#FFA500"
-                                    Foreground="White"
-                                    Click="TransferButton_Click"
-                                    Visibility="Collapsed"/>
-                            <TextBlock x:Name="TransferButtonInfo"
-                                       TextWrapping="Wrap"
-                                       FontSize="11"
-                                       Foreground="#555555"
-                                       Margin="5,0,0,0"/>
-                        </StackPanel>
                     </Grid>
 
                     <!-- Legend -->
@@ -247,24 +247,17 @@
               Grid.RowSpan="2" 
               Background="#80000000" 
               Visibility="Collapsed">
-            <StackPanel VerticalAlignment="Center" 
-                      HorizontalAlignment="Center">
-                <TextBlock Text="Түр хүлээнэ үү..." 
-                         Foreground="White" 
-                         FontSize="18" 
-                         HorizontalAlignment="Center"/>
-            </StackPanel>
+            <TextBlock Text="Түр хүлээнэ үү..." 
+                     Foreground="White" 
+                     FontSize="18" 
+                     HorizontalAlignment="Center"
+                     VerticalAlignment="Center"/>
         </Grid>
 
         <!-- Toast Notification -->
         <Border x:Name="ToastNotification" 
                 Grid.RowSpan="2"
-                Background="#323232" 
-                CornerRadius="5" 
-                Padding="20,10" 
-                HorizontalAlignment="Center" 
-                VerticalAlignment="Bottom" 
-                Margin="0,0,0,20" 
+                Style="{StaticResource ToastStyle}"
                 Visibility="Collapsed">
             <TextBlock x:Name="ToastText" 
                      Foreground="White" 
