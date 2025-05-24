@@ -1,6 +1,5 @@
 using DataAccess.Models;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.AspNetCore.SignalR.Client;
 using SignalRHubLibrary;
 using SocketServerLibrary;
 using System;
@@ -10,13 +9,11 @@ namespace BusinessLogic.Services
 {
     public class NotificationService : INotificationService
     {
-        //private IHubContext<FlightHub> _flightHubContext;
-        private HubConnection _hubConnection;
-        private readonly string _hubUrl = "http://localhost:5027/flightHub";
+        private readonly IHubContext<FlightHub> _flightHubContext;
         
-        public NotificationService()
+        public NotificationService(IHubContext<FlightHub> flightHubContext)
         {
-            InitializeSignalRConnection();
+            _flightHubContext = flightHubContext;
             InitializeWebSocketServer();
         }
         
@@ -46,26 +43,6 @@ namespace BusinessLogic.Services
                 }
             }
         }
-        
-        private async void InitializeSignalRConnection()
-        {
-            try
-            {
-                _hubConnection = new HubConnectionBuilder()
-                    .WithUrl(_hubUrl)
-                    .WithAutomaticReconnect(new[] { TimeSpan.Zero, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(5) })
-                    .Build();
-                
-                await _hubConnection.StartAsync();
-                Console.WriteLine("SignalR connection successful: " + _hubUrl);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error creating SignalR connection: {ex.Message}");
-                Console.WriteLine("SignalR Hub сервер ажиллахгүй байна. REST API сервер эхлүүлсэн эсэхийг шалгана уу.");
-                // SignalR холболт амжилтгүй боловч сервисийг үргэлжлүүлнэ
-            }
-        }
 
         /// <summary>
         /// Нислэгийн төлөв өөрчлөгдөх үед дуудагдах арга. SignalR ашиглан бүх хэрэглэгчдэд мэдэгдэнэ.
@@ -79,15 +56,15 @@ namespace BusinessLogic.Services
             
             try
             {
-                if (_hubConnection != null && _hubConnection.State == HubConnectionState.Connected)
-            {
-                    Console.WriteLine($"Sending notification using HubConnection... (State: {_hubConnection.State})");
-                    await _hubConnection.SendAsync("NotifyFlightStatusChanged", flightId, (int)newStatus);
-                    Console.WriteLine("SignalR notification sent successfully (using HubConnection)");
+                if (_flightHubContext != null)
+                {
+                    Console.WriteLine($"Sending SignalR notification using IHubContext...");
+                    await _flightHubContext.Clients.All.SendAsync("FlightStatusChanged", flightId, (int)newStatus);
+                    Console.WriteLine("SignalR notification sent successfully!");
                 }
                 else
                 {
-                    Console.WriteLine($"SignalR connection unavailable (State: {_hubConnection?.State ?? HubConnectionState.Disconnected}). Notification not sent.");
+                    Console.WriteLine("IHubContext is null. Notification not sent.");
                 }
             }
             catch (Exception ex)

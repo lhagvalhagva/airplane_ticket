@@ -38,8 +38,8 @@ namespace FlightDashboard.Services
                     .WithAutomaticReconnect(new[] { TimeSpan.Zero, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(10) })
                     .Build();
 
-                // Нислэгийн төлөв өөрчлөгдсөн үед дуудагдах
-                _hubConnection.On<int, int>("NotifyFlightStatusChanged", (flightId, newStatus) =>
+                // Нислэгийн төлөв өөрчлөгдсөн үед дуудагдах - Method нэр зөв байх ёстой
+                _hubConnection.On<int, int>("FlightStatusChanged", (flightId, newStatus) =>
                 {
                     Console.WriteLine($"SignalR: Flight {flightId} status changed to {newStatus}");
                     FlightStatusChanged?.Invoke(flightId, newStatus);
