@@ -53,8 +53,8 @@ namespace AirplaneTicket.WPF.Pages
             InitializeComponent();
             _airplaneService = new AirplaneService();
             
-            // Initialize WebSocket client
-            _webSocketClient = new WebSocketClient("localhost", 9009);
+            // Initialize WebSocket client (will use configuration from appsettings.json)
+            _webSocketClient = new WebSocketClient();
             _webSocketClient.SeatAssigned += WebSocketClient_SeatAssigned;
             
             // Setup UI event handlers

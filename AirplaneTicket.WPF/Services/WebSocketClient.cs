@@ -37,7 +37,7 @@ namespace AirplaneTicket.WPF.Services
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .Build();
             
-            _serverAddress = serverAddress ?? configuration["ServerSettings:SocketServerAddress"] ?? "localhost";
+            _serverAddress = serverAddress ?? configuration["ServerSettings:SocketServerAddress"] ?? "10.3.132.225";
             _serverPort = port > 0 ? port : int.Parse(configuration["ServerSettings:SocketServerPort"] ?? "9009");
             _cancellationTokenSource = new CancellationTokenSource();
         }

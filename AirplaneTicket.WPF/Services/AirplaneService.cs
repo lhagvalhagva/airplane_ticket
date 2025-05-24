@@ -25,7 +25,7 @@ namespace AirplaneTicket.WPF.Services
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .Build();
             
-            _baseUrl = configuration["ServerSettings:ApiBaseUrl"] ?? "http://localhost:5027/api";
+            _baseUrl = configuration["ServerSettings:ApiBaseUrl"] ?? "http://10.3.132.225:5027/api";
         }
 
         #region Flight Operations
