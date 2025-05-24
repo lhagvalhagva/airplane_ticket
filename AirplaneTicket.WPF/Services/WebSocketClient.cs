@@ -6,14 +6,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
+using Microsoft.Extensions.Configuration;
+using System.IO;
 
 namespace AirplaneTicket.WPF.Services
 {
     public class WebSocketClient
     {
         private Socket _clientSocket;
-        private string _serverAddress = "localhost";
-        private int _serverPort = 9009;
+        private string _serverAddress;
+        private int _serverPort;
         private bool _isConnected = false;
         private CancellationTokenSource _cancellationTokenSource;
         private Thread _receiveThread;
@@ -27,10 +29,16 @@ namespace AirplaneTicket.WPF.Services
         // Холбогдсон эсэх
         public bool IsConnected => _isConnected;
         
-        public WebSocketClient(string serverAddress = "localhost", int port = 9009)
+        public WebSocketClient(string serverAddress = null, int port = 0)
         {
-            _serverAddress = serverAddress;
-            _serverPort = port;
+            // Load configuration
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .Build();
+            
+            _serverAddress = serverAddress ?? configuration["ServerSettings:SocketServerAddress"] ?? "localhost";
+            _serverPort = port > 0 ? port : int.Parse(configuration["ServerSettings:SocketServerPort"] ?? "9009");
             _cancellationTokenSource = new CancellationTokenSource();
         }
         
@@ -194,7 +202,7 @@ namespace AirplaneTicket.WPF.Services
                                     ProcessSeatAssignedEvent(dataElement);
                                     break;
                                 default:
-                                    LogMessage($"Дэмжигдээгүй ивэнт: {eventName}");
+                                    LogMessage($"Дэмжигдээгүй эвэнт: {eventName}");
                                     break;
                             }
                         }
@@ -214,7 +222,6 @@ namespace AirplaneTicket.WPF.Services
         {
             try
             {
-                // Шаардлагатай мэдээллийг JSON-с авах
                 int flightId = 0;
                 string seatNumber = "";
                 int passengerId = 0;
@@ -236,7 +243,6 @@ namespace AirplaneTicket.WPF.Services
                 
                 LogMessage($"Суудал оноолтын мэдэгдэл хүлээн авлаа: Нислэг {flightId}, Суудал {seatNumber}, Зорчигч {passengerId}");
                 
-                // UI thread дээр ивэнт дуудах
                 Application.Current.Dispatcher.BeginInvoke(new Action(() => 
                 {
                     OnSeatAssigned(new SeatAssignedEventArgs

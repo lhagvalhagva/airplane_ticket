@@ -2,6 +2,7 @@
 @using FlightDashboard.Services
 @using Microsoft.AspNetCore.SignalR.Client
 @inject IFlightService FlightService
+@inject ISignalRService SignalRService
 @inject NavigationManager NavigationManager
 @implements IAsyncDisposable
 
@@ -66,13 +67,13 @@
             <button class="btn btn-sm btn-outline-primary ms-2" @onclick="RefreshData">
                 <i class="bi bi-arrow-clockwise"></i> Шинэчлэх
             </button>
-            @if (isConnected)
+            @if (SignalRService.IsConnected)
             {
                 <span class="badge bg-success ms-2">SignalR Connected</span>
             }
             else
             {
-                <span class="badge bg-danger ms-2">SignalR Disconnected</span>
+                <span class="badge bg-danger ms-2">SignalR Disconnected (@SignalRService.ConnectionStatus)</span>
             }
         </div>
     }
@@ -146,9 +147,6 @@
 
 @code {
     private List<Flight> flights;
-    private HubConnection hubConnection;
-    private string connectionStatus = "Холбогдож байна...";
-    private bool isConnected = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -160,54 +158,19 @@
     {
         try
         {
-            // SignalR хабтай холбогдох
-            hubConnection = new HubConnectionBuilder()
-                .WithUrl(NavigationManager.ToAbsoluteUri("http://localhost:5000/flightHub"))
-                .WithAutomaticReconnect()
-                .Build();
-
-            // Төлөв өөрчлөгдөх үед дуудагдах handler
-            hubConnection.On<int, int>("FlightStatusChanged", async (flightId, statusValue) => 
-            {
-                Console.WriteLine($"Client handler called for FlightStatusChanged: {flightId}, {statusValue}");
-                await HandleFlightStatusChanged(flightId, statusValue);
-            });
-            
-            // Холболтын төлөв өөрчлөгдөх үед дуудагдах handler
-            hubConnection.Closed += async (error) => 
-            {
-                connectionStatus = "Холболт салсан";
-                isConnected = false;
-                StateHasChanged();
-                
-                await Task.Delay(5000); // 5 секундын дараа дахин холбогдох оролдлого хийнэ
-                await hubConnection.StartAsync();
-            };
-
-            // Холболт амжилттай тохиолдолд дуудагдах handler
-            hubConnection.On<string>("Connected", (message) => 
-            {
-                connectionStatus = message;
-                isConnected = true;
-                StateHasChanged();
-            });
-
-            // Холболт эхлүүлэх
-            await hubConnection.StartAsync();
-            connectionStatus = "Амжилттай холбогдлоо";
-            isConnected = true;
+            // SignalRService ашиглан холбогдох
+            SignalRService.FlightStatusChanged += HandleFlightStatusChanged;
+            await SignalRService.StartConnectionAsync();
             Console.WriteLine("SignalR connection started successfully in Flights.razor!");
-            await RefreshData();
         }
         catch (Exception ex)
         {
-            connectionStatus = $"Холболтын алдаа: {ex.Message}";
-            isConnected = false;
+            Console.WriteLine($"SignalR холболтын алдаа: {ex.Message}");
         }
     }
 
     // Нислэгийн төлөв өөрчлөгдөхөд дуудагдах функц
-    private async Task HandleFlightStatusChanged(int flightId, int statusValue)
+    private void HandleFlightStatusChanged(int flightId, int statusValue)
     {
         Console.WriteLine($"========== NOTIFICATION RECEIVED ON DASHBOARD ===========");
         Console.WriteLine($"Flights.razor: Flight ID: {flightId}, new status: {statusValue}");
@@ -218,7 +181,7 @@
             Console.WriteLine($"Enum status: {newStatus}");
             
             // Find the flight in the list
-            var flight = flights.FirstOrDefault(f => f.Id == flightId);
+            var flight = flights?.FirstOrDefault(f => f.Id == flightId);
             Console.WriteLine($"Found flight: {(flight != null ? $"ID={flight.Id}, FlightNumber={flight.FlightNumber}" : "null")}");
             
             if (flight != null)
@@ -229,17 +192,14 @@
                 
                 // Update UI
                 Console.WriteLine("Calling StateHasChanged...");
-                StateHasChanged();
+                InvokeAsync(StateHasChanged);
                 Console.WriteLine("StateHasChanged called");
-                
-                // Could show animation effect or notification
-                // await JS.InvokeVoidAsync("highlightRow", flightId);
             }
             else
             {
                 Console.WriteLine($"WARNING: Flight with ID={flightId} not found!");
                 // Refresh data if flight not found
-                await RefreshData();
+                InvokeAsync(RefreshData);
             }
         }
         catch (Exception ex) {
@@ -308,9 +268,7 @@
     // IAsyncDisposable интерфейсийн шаардлагын дагуу хаах функц
     public async ValueTask DisposeAsync()
     {
-        if (hubConnection is not null)
-        {
-            await hubConnection.DisposeAsync();
-        }
+        SignalRService.FlightStatusChanged -= HandleFlightStatusChanged;
+        await SignalRService.StopConnectionAsync();
     }
 }

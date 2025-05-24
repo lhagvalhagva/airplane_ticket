@@ -61,7 +61,10 @@ namespace SocketServerLibrary
         public void Start()
         {
             if (HasStarted)
+            {
+                Console.WriteLine($"WebSocket сервер аль хэдийн {_port} порт дээр ажиллаж байна");
                 return;
+            }
 
             try
             {
@@ -78,9 +81,15 @@ namespace SocketServerLibrary
                 acceptThread.Start();
                 _threads.Add(acceptThread);
             }
+            catch (SocketException ex) when (ex.ErrorCode == 10048) // Address already in use
+            {
+                Console.WriteLine($"Порт {_port} аль хэдийн ашиглагдаж байна. WebSocket сервер эхлүүлэх боломжгүй.");
+                HasStarted = false;
+            }
             catch (Exception ex)
             {
                 Console.WriteLine($"Сервер эхлүүлэхэд алдаа гарлаа: {ex.Message}");
+                HasStarted = false;
             }
         }
 
@@ -189,37 +198,6 @@ namespace SocketServerLibrary
                 }
             }
         }
-
-        /// <summary>
-        /// Тодорхой нэг клиент рүү мессеж илгээх
-        /// </summary>
-        public bool SendMessageToClient(int clientId, string eventName, object data)
-        {
-            if (!_connectedSockets.TryGetValue(clientId, out Socket clientSocket))
-                return false;
-                
-            try
-            {
-                byte[] messageBytes = CreateMessageBytes(eventName, data);
-                
-                if (clientSocket.Connected)
-                {
-                    clientSocket.Send(messageBytes);
-                    return true;
-                }
-                else
-                {
-                    CleanupClient(clientId, clientSocket);
-                    return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Мессеж илгээхэд алдаа гарлаа (клиент {clientId}): {ex.Message}");
-                return false;
-            }
-        }
-
         /// <summary>
         /// Серверийг зогсоох
         /// </summary>
@@ -232,7 +210,6 @@ namespace SocketServerLibrary
             {
                 _cancellationTokenSource.Cancel();
                 
-                // Бүх клиентийн холболтыг хаах
                 foreach (var client in _connectedSockets)
                 {
                     CloseSocketSafely(client.Value);
@@ -240,7 +217,6 @@ namespace SocketServerLibrary
                 
                 _connectedSockets.Clear();
                 
-                // Сервер сокетийг хаах
                 CloseSocketSafely(_serverSocket);
                 
                 HasStarted = false;

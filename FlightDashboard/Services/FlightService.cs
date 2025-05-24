@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 
 namespace FlightDashboard.Services
 {
@@ -16,11 +17,12 @@ namespace FlightDashboard.Services
     public class FlightService : IFlightService
     {
         private readonly HttpClient _httpClient;
-        private readonly string _baseUrl = "http://localhost:5027/api/Flights";
+        private readonly string _baseUrl;
 
-        public FlightService(HttpClient httpClient)
+        public FlightService(HttpClient httpClient, IConfiguration configuration)
         {
             _httpClient = httpClient;
+            _baseUrl = configuration["ApiSettings:BaseUrl"] ?? "http://10.3.132.225:5027/api/Flights";
         }
 
         public async Task<List<Flight>> GetAllFlightsAsync()

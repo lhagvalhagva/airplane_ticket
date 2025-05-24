@@ -86,8 +86,9 @@ app.MapControllers();
 // Configure SignalR Hub
 app.MapHub<FlightHub>("/flightHub");
 
-// Урд төлөвлөсөн порт дээр ажиллуулах
-app.Urls.Add("http://localhost:5000");
-app.Urls.Add("http://localhost:5027");
+// Use URLs from configuration or default ports for all interfaces
+// Comment out hardcoded localhost URLs to use appsettings.json configuration
+// app.Urls.Add("http://localhost:5000");
+// app.Urls.Add("http://localhost:5027");
 
 app.Run();
